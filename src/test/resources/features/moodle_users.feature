@@ -59,6 +59,45 @@ Feature: Moodle user administration
     When admin changes the user email
     Then the user email is updated
 
+  # ---- manual remainder (standard Moodle, no report-builder dependency) ----
+
+  @U10 @U11 @users
+  Scenario: A user can update their profile and the change is reflected
+    Given a registered user
+    When the user updates their profile city
+    Then the profile change is reflected
+
+  @U12 @users
+  Scenario: Invalid profile data is rejected
+    Given a registered user
+    When the user saves an invalid email in their profile
+    Then the profile form shows a validation error
+
+  @U22 @users
+  Scenario: After logout a protected page requires login
+    Given a registered user
+    Then after the user logs out a protected page requires login
+
+  @U15 @users
+  Scenario: An already-enrolled user lands on the course page
+    Given a registered user enrolled in the course
+    Then the user sees the course page not an enrolment page
+
+  @U24 @users
+  Scenario: Admin can edit and delete a user
+    Given a registered user
+    When admin edits the user first name
+    And admin deletes the user
+    Then the deleted user is not listed
+
+  @U28 @users
+  Scenario: Admin can create a cohort
+    Then admin can create a cohort that is listed
+
+  @U29 @users
+  Scenario: Admin can delete a cohort
+    Then admin can create and then delete a cohort
+
   # ---- derived gaps (CGAP-U-*) ----
 
   @CGAP-U-1 @users

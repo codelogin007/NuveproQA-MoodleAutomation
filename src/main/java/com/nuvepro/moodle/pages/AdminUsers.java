@@ -142,6 +142,64 @@ public class AdminUsers extends BasePage {
         return page.locator("#id_email").inputValue();
     }
 
+    public void changeFirstName(String userId, String name) {
+        openEditUser(userId);
+        page.locator("#id_firstname").fill(name);
+        page.locator("#id_submitbutton").click();
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+        page.waitForTimeout(1_500);
+    }
+
+    /** Delete a user via the admin UI confirmation page (/user/delete.php). */
+    public void deleteUserViaUi(String userId) {
+        Object sk = page.evaluate("() => (window.M && M.cfg && M.cfg.sesskey) || ''");
+        navigate("/user/delete.php?id=" + userId + "&sesskey=" + sk);
+        page.waitForTimeout(1_000);
+        Locator confirm = page.locator("button:has-text('Continue'), input[value='Continue'], "
+                + "button:has-text('Delete'), input[value='Delete'], #region-main .btn-primary");
+        if (confirm.count() > 0 && confirm.first().isVisible()) {
+            confirm.first().click();
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+            page.waitForTimeout(1_500);
+        }
+    }
+
+    // ---- cohorts (/cohort) ----
+    public void cohortCreate(String name, String idnumber) {
+        navigate("/cohort/edit.php?contextid=1");
+        page.locator("#id_name").waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE).setTimeout(30_000));
+        page.locator("#id_name").fill(name);
+        page.locator("#id_idnumber").fill(idnumber);
+        page.locator("#id_submitbutton").click();
+        page.waitForTimeout(1_500);
+    }
+
+    public boolean cohortListed(String name) {
+        navigate("/cohort/index.php");
+        page.waitForTimeout(1_500);
+        return page.locator("tr:has-text('" + name + "')").count() > 0;
+    }
+
+    /** Delete a cohort by clicking the in-row Delete action (data-action=cohort-delete; JS resolves
+     *  the real cohort id and opens a confirm modal). */
+    public void cohortDelete(String name) {
+        navigate("/cohort/index.php");
+        page.waitForTimeout(1_500);
+        Locator row = page.locator("tr:has-text('" + name + "')");
+        if (row.count() == 0) return;
+        // the delete action lives inside a per-row actions dropdown — open it first
+        Locator toggle = row.first().locator("[data-toggle='dropdown'], .dropdown-toggle, a[role='button']");
+        if (toggle.count() > 0) { toggle.first().click(); page.waitForTimeout(500); }
+        Locator del = row.first().locator("a[data-action='cohort-delete']");
+        if (del.count() > 0) {
+            del.first().click();
+            page.waitForTimeout(800);
+            try { confirmModal(); } catch (Throwable ignored) {}
+            page.waitForTimeout(1_500);
+        }
+    }
+
     /** Open a user's admin edit form directly by id. */
     public void openEditUser(String userId) {
         navigate("/user/editadvanced.php?id=" + userId + "&course=1");

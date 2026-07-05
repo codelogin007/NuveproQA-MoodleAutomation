@@ -34,6 +34,10 @@ public class MoodleUsersSteps {
     private String newEmail;
     private String forcePwUser;
     private String forcePwPass;
+    private Page userPage;
+    private String profileCity;
+    private String editedFirstName;
+    private String cohortToDelete;
     private final List<Long> toDelete = new ArrayList<>();
     private BrowserContext freshCtx;
 
@@ -177,6 +181,115 @@ public class MoodleUsersSteps {
         assertEquals(admin.currentEmailValue(String.valueOf(user.id)), newEmail, "email not updated");
     }
 
+    // ---- U10/U11: profile update + reflected ----
+    @When("the user updates their profile city")
+    public void theUserUpdatesTheirProfileCity() {
+        userPage = loginFresh(user.username, user.password);
+        assertTrue(loggedIn(userPage), "user could not log in");
+        profileCity = "AutoCity" + System.currentTimeMillis();
+        userPage.navigate(Settings.BASE_URL + "/user/edit.php");
+        userPage.waitForTimeout(1_500);
+        userPage.locator("#id_city").fill(profileCity);
+        userPage.locator("#id_submitbutton").click();
+        userPage.waitForTimeout(2_000);
+    }
+
+    @Then("the profile change is reflected")
+    public void theProfileChangeIsReflected() {
+        userPage.navigate(Settings.BASE_URL + "/user/edit.php");
+        userPage.waitForTimeout(1_500);
+        assertEquals(userPage.locator("#id_city").inputValue(), profileCity, "profile city change not persisted");
+    }
+
+    // ---- U12: invalid profile data ----
+    @When("the user saves an invalid email in their profile")
+    public void theUserSavesAnInvalidEmailInTheirProfile() {
+        userPage = loginFresh(user.username, user.password);
+        assertTrue(loggedIn(userPage), "user could not log in");
+        userPage.navigate(Settings.BASE_URL + "/user/edit.php");
+        userPage.waitForTimeout(1_500);
+        userPage.locator("#id_email").fill("notanemail");
+        userPage.locator("#id_submitbutton").click();
+        userPage.waitForTimeout(1_500);
+    }
+
+    @Then("the profile form shows a validation error")
+    public void theProfileFormShowsAValidationError() {
+        boolean stillOnForm = userPage.url().contains("/user/edit.php");
+        boolean err = userPage.locator("[id^='id_error_'], .invalid-feedback, .form-control-feedback").count() > 0
+                || userPage.locator("body").innerText().toLowerCase().contains("invalid email");
+        assertTrue(stillOnForm && err, "invalid email accepted in profile (url=" + userPage.url() + ")");
+    }
+
+    // ---- U22: session after logout ----
+    @Then("after the user logs out a protected page requires login")
+    public void afterLogoutAProtectedPageRequiresLogin() {
+        Page p = loginFresh(user.username, user.password);
+        assertTrue(loggedIn(p), "user could not log in");
+        Object sk = p.evaluate("() => (window.M && M.cfg && M.cfg.sesskey) || ''");
+        p.navigate(Settings.BASE_URL + "/login/logout.php?sesskey=" + sk);
+        p.waitForTimeout(1_000);
+        p.navigate(Settings.BASE_URL + "/user/edit.php");
+        p.waitForTimeout(1_500);
+        assertTrue(!loggedIn(p) || p.url().contains("/login/"),
+                "protected page did not require login after logout (url=" + p.url() + ")");
+    }
+
+    // ---- U15: already enrolled -> course page ----
+    @Given("a registered user enrolled in the course")
+    public void aRegisteredUserEnrolledInTheCourse() {
+        requireWs();
+        if (Settings.COURSE_ID.isEmpty()) throw new SkipException("COURSE_ID not set");
+        user = ApiClient.createUser(System.currentTimeMillis());
+        toDelete.add(user.id);
+        ApiClient.enrolUser(user.id, Long.parseLong(Settings.COURSE_ID), 5);
+    }
+
+    @Then("the user sees the course page not an enrolment page")
+    public void theUserSeesTheCoursePage() {
+        Page p = loginFresh(user.username, user.password);
+        assertTrue(loggedIn(p), "user could not log in");
+        p.navigate(Settings.BASE_URL + "/course/view.php?id=" + Settings.COURSE_ID,
+                new Page.NavigateOptions().setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
+                        .setTimeout(45_000));
+        p.waitForTimeout(2_000);
+        // enrolled -> stays on the course page; not-enrolled -> redirected to /enrol/index.php
+        assertTrue(p.url().contains("/course/view.php") && !p.url().contains("/enrol/"),
+                "enrolled user was not taken to the course page (url=" + p.url() + ")");
+    }
+
+    // ---- U24: admin edit + delete ----
+    @When("admin edits the user first name")
+    public void adminEditsTheUserFirstName() {
+        editedFirstName = "Edited" + System.currentTimeMillis();
+        admin.changeFirstName(String.valueOf(user.id), editedFirstName);
+        admin.openEditUser(String.valueOf(user.id));
+        assertEquals(ctx.page.locator("#id_firstname").inputValue(), editedFirstName, "first name not updated");
+    }
+
+    // (U24 delete reuses the existing "admin deletes the user" step — WS admin delete.)
+
+    // ---- U28: create cohort ----
+    @Then("admin can create a cohort that is listed")
+    public void adminCanCreateACohortThatIsListed() {
+        long s = System.currentTimeMillis();
+        String name = "AutoCohort" + s;
+        admin.cohortCreate(name, "autocoh" + s);
+        cohortToDelete = name;
+        assertTrue(admin.cohortListed(name), "cohort not listed after creation: " + name);
+    }
+
+    // ---- U29: delete cohort ----
+    @Then("admin can create and then delete a cohort")
+    public void adminCanCreateAndThenDeleteACohort() {
+        long s = System.currentTimeMillis();
+        String name = "AutoCohortDel" + s;
+        admin.cohortCreate(name, "autocohd" + s);
+        assertTrue(admin.cohortListed(name), "cohort not created: " + name);
+        admin.cohortDelete(name);
+        assertFalse(admin.cohortListed(name), "cohort still listed after delete: " + name);
+    }
+
     // ---- CGAP-U-1: invalid email format ----
     @When("admin creates a user with an invalid email format")
     public void adminCreatesAUserWithAnInvalidEmailFormat() {
@@ -316,6 +429,7 @@ public class MoodleUsersSteps {
     @After("@users")
     public void cleanup() {
         if (freshCtx != null) { try { freshCtx.close(); } catch (Throwable ignored) {} freshCtx = null; }
+        if (cohortToDelete != null) { try { admin.cohortDelete(cohortToDelete); } catch (Throwable ignored) {} cohortToDelete = null; }
         for (Long id : toDelete) {
             try { ApiClient.deleteUser(id); } catch (Throwable ignored) {}
         }
