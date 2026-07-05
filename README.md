@@ -11,11 +11,17 @@ and behaviour is driven through the **UI** with Playwright.
 
 ## Configure
 Copy `.env.example` to `.env` and fill in (the `.env` is git-ignored):
-- `MOODLE_BASE_URL`, admin/student credentials, `MOODLE_WS_TOKEN`
+- `MOODLE_BASE_URL`, admin/student credentials, `MOODLE_WS_TOKEN` (Web Services token — seeds
+  test users via `core_user_create_users` / `enrol_manual_enrol_users` / `core_user_delete_users`)
 - `COURSE_ID` (course used by activity-creation tests, e.g. from the course URL `?id=72`)
 - `PLAYGROUND_CMID` (an existing sandbox activity), optional `GUIDED_CMID` / `ASSESSMENT_CMID`
+- **CloudLabs (provider) API** — needed only for the lab-provisioning tags below:
+  `CLOUDLABS_GATEWAY_URL`, `CLOUDLABS_ADMIN_USER`, `CLOUDLABS_ADMIN_PASS`. Used to poll a lab's
+  real state and to extend/expire its duration so long-running lab tests don't expire mid-run.
 
 > Note: quote values that contain `#` (e.g. passwords) in `.env`, and keep the file BOM-free.
+> Tags that DON'T need CloudLabs or a running lab: `@users`, `@guided`. Everything under
+> `@provisioning` spins a real cloud lab (slow; ~5-min deletes) and needs the CloudLabs vars.
 
 ## Run (from this folder: `automation-java`)
 
@@ -27,6 +33,24 @@ Copy `.env.example` to `.env` and fill in (the `.env` is git-ignored):
 | Run only one scenario (hidden) | `mvnw test -Pwatch -Dcucumber.tags="@PG-8"` |
 
 PowerShell: prefix with `.\mvnw` and quote the arg: `"-Dcucumber.tags=@PG-1"`.
+
+### Run by module / group
+Each module is a tag. Fast/no-cloud modules first; provisioning modules spin a real lab.
+
+| Module | Tag | Command | Needs |
+|---|---|---|---|
+| **Moodle users** (create/login/suspend/email + derived gaps) | `@users` | `mvnw test "-Dcucumber.tags=@users"` | WS token |
+| Derived user gaps only | `@CGAP-U-1 or @CGAP-U-2 or ...` | `mvnw test "-Dcucumber.tags=@CGAP-U-1 or @CGAP-U-8"` | WS token |
+| **Guided** (landing/admin/config presence) | `@guided` | `mvnw test "-Dcucumber.tags=@guided"` | `GUIDED_CMID` |
+| Playground **state actions** (start/stop/delete/sync) | `@stateactions` | `mvnw test "-Dcucumber.tags=@stateactions"` | CloudLabs |
+| Playground **console** read-only (usage/info/instructions/notes) | `@console` | `mvnw test "-Dcucumber.tags=@console"` | CloudLabs |
+| **Student** self-service (start/stop own lab) | `@studentaction` | `mvnw test "-Dcucumber.tags=@studentaction"` | CloudLabs |
+| **Bulk** action on multiple labs | `@bulk` | `mvnw test "-Dcucumber.tags=@bulk"` | CloudLabs |
+| Fresh-lab lifecycle / expired-lab | `@freshlab` | `mvnw test "-Dcucumber.tags=@freshlab"` | CloudLabs |
+
+> Lab tags share ONE fresh-user lab per run: provisioned once, expire→extend→actions, deleted
+> once at teardown. State is verified via the **CloudLabs API** (authoritative), not UI scraping.
+> See CLAUDE.md → "Lab operations — MANDATORY method".
 
 **Flags**
 - `-Dheadless=false` — show the browser (default is headless).
@@ -49,14 +73,19 @@ PowerShell: prefix with `.\mvnw` and quote the arg: `"-Dcucumber.tags=@PG-1"`.
 src/main/java/com/nuvepro/moodle/
   config/Settings.java        env/.env + -D overrides (headless, slowmo, ...)
   helpers/Auth.java           UI login
-  pages/                      Page Objects (BasePage, PlaygroundLanding, PlaygroundControlPanel, ManageLabs)
+  helpers/ApiClient.java      Moodle Web Services (seed/enrol/delete users)
+  helpers/CloudLabsClient.java provider API — lab status polling + extend/expire
+  pages/                      Page Objects: BasePage, PlaygroundLanding, PlaygroundControlPanel,
+                              ManageLabs, GuidedLanding, AdminUsers
 src/test/java/com/nuvepro/moodle/
   BaseTest.java               TestNG Playwright lifecycle (used by ConnectivityTest)
   ConnectivityTest.java       login smoke (plain TestNG)
   RunCucumberTest.java        Cucumber runner (emits target/cucumber.json)
-  steps/                      GlobalHooks (login-once/storageState + lab safety-net),
-                              Hooks, TestContext (PicoContainer), PlaygroundSteps
-src/test/resources/features/  Gherkin .feature files (one @PG-n tag per manual case)
+  steps/                      GlobalHooks (login-once/storageState + lab safety-net), Hooks,
+                              TestContext (PicoContainer); Playground/SharedLab/FreshLab/Bulk,
+                              Guided, MoodleUsers step definitions
+src/test/resources/features/  Gherkin .feature files (one @<case> tag per manual case:
+                              @PG-* playground, @PGG-* guided, @U-*/@CGAP-U-* users)
 testng-fast.xml / -slow.xml / -watch.xml   suite definitions
 ```
 
