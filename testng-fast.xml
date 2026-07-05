@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Fast suite: non-destructive tests (excludes real cloud provisioning). Default CI gate. -->
+<suite name="MoodleFastSuite" verbose="1">
+    <test name="NonDestructive">
+        <groups>
+            <run>
+                <exclude name="provisioning"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="com.nuvepro.moodle.*"/>
+        </packages>
+    </test>
+</suite>

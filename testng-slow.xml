@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Slow suite: runs ONLY the Cucumber runner, filtered to @provisioning scenarios
+     (via -Pslow which sets cucumber.filter.tags=@provisioning). Spins a REAL cloud lab. -->
+<suite name="MoodleSlowSuite" verbose="1">
+    <test name="Provisioning">
+        <classes>
+            <class name="com.nuvepro.moodle.RunCucumberTest"/>
+        </classes>
+    </test>
+</suite>
