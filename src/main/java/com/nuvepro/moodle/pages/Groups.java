@@ -27,6 +27,51 @@ public class Groups extends BasePage {
         createGroupSucceeded(courseId, name);
     }
 
+    /** Create a group and return its id (captured from the ?group=<id> redirect). */
+    public String createGroupReturningId(int courseId, String name) {
+        navigate("/group/group.php?courseid=" + courseId + "&id=0");
+        page.locator("#id_name").waitFor();
+        page.locator("#id_name").fill(name);
+        page.locator("#id_submitbutton").click();
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+        page.waitForTimeout(1_500);
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("group=(\\d+)").matcher(page.url());
+        return m.find() ? m.group(1) : null;
+    }
+
+    /** Add a user (matched by name via the dual-listbox) to a group's members. */
+    public void addUserToGroup(String groupId, String searchTerm) {
+        navigate("/group/members.php?group=" + groupId);
+        page.locator("#addselect").waitFor();
+        Locator search = page.locator("#addselect_searchtext");
+        if (search.count() > 0) { search.click(); search.type(searchTerm); page.waitForTimeout(2_000); }
+        Locator opt = page.locator("#addselect option:not([disabled])");
+        if (opt.count() > 0) opt.first().click();
+        page.locator("input[name='add']").click();
+        page.waitForTimeout(1_500);
+    }
+
+    public boolean userInGroup(String groupId, String term) {
+        navigate("/group/members.php?group=" + groupId);
+        page.waitForTimeout(1_000);
+        return page.locator("#removeselect option").filter(new Locator.FilterOptions().setHasText(term)).count() > 0;
+    }
+
+    public void deleteGroupById(int courseId, String groupId) {
+        // fall back to name-based deletion is handled elsewhere; delete via the index by selecting value
+        navigate("/group/index.php?id=" + courseId);
+        page.waitForTimeout(800);
+        Locator opt = page.locator("#groups option[value='" + groupId + "']");
+        if (opt.count() == 0) return;
+        opt.first().click();
+        page.waitForTimeout(200);
+        page.locator("#deletegroup").click();
+        page.waitForTimeout(1_000);
+        Locator yes = page.locator("input[name='delete'], input[value='Yes'], button:has-text('Yes'), #region-main .btn-primary");
+        if (yes.count() > 0 && yes.first().isVisible()) yes.first().click();
+        page.waitForTimeout(1_500);
+    }
+
     /** How many groups whose name matches {@code name} exist in the course groups list. */
     public int groupCount(int courseId, String name) {
         navigate("/group/index.php?id=" + courseId);

@@ -69,8 +69,11 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
   group (G2), search in dropdown (G4), groups column on Manage User Labs (G42)
 - ⏸️ G3 select-multiple: SKIPS - the dropdown is single-select (All Groups or one), so multi-select is
   not supported by the UI (documented)
-- 🔲 Report export by group (G6-G10, G27-G37), create/manage cohorts + members (G11-G24),
-  cohort enrolment + sync (G25-G33, G45-G46), groups column on other reports (G34)
+- ✅ Cohorts + members: create cohort (G11), duplicate cohort names allowed (G13 - opposite of groups),
+  same user in multiple groups (G24, via the group-members dual-listbox)
+- 🔲 Report export by group (G6-G10, G27-G37), groups column on other reports (G34)
+- ⏸️ Cohort-sync enrolment method (G15-G19, G23, G25-G33, G45-G46) - complex enrolment-method UI + sync
+- ⏸️ Cohort membership add/remove (G20-G22) - needs the cohort-assign page id (JS `:id` on the index)
 - ⏸️ Duration/time-based (G26/G30-G33/G43)
 - ✅ Gap rows CGAP-GR-1..11 in the Groups_Testcases sheet
 

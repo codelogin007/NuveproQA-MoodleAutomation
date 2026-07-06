@@ -181,6 +181,24 @@ public class AdminUsers extends BasePage {
         return page.locator("tr:has-text('" + name + "')").count() > 0;
     }
 
+    /** Create a cohort; returns true if it succeeded (left the edit form). */
+    public boolean cohortCreateSucceeded(String name, String idnumber) {
+        navigate("/cohort/edit.php?contextid=1");
+        page.locator("#id_name").waitFor();
+        page.locator("#id_name").fill(name);
+        if (idnumber != null && page.locator("#id_idnumber").count() > 0) page.locator("#id_idnumber").fill(idnumber);
+        page.locator("#id_submitbutton").click();
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+        page.waitForTimeout(1_500);
+        return !page.url().contains("edit.php");
+    }
+
+    public int cohortCount(String name) {
+        navigate("/cohort/index.php");
+        page.waitForTimeout(1_500);
+        return page.locator("tr").filter(new Locator.FilterOptions().setHasText(name)).count();
+    }
+
     /** Delete a cohort by clicking the in-row Delete action (data-action=cohort-delete; JS resolves
      *  the real cohort id and opens a confirm modal). */
     public void cohortDelete(String name) {

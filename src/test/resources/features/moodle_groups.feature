@@ -47,3 +47,20 @@ Feature: Moodle course groups
   Scenario: Multiple-group selection is not supported (single-select dropdown)
     When admin creates a group and opens Manage User Labs
     Then selecting multiple groups is not supported
+
+  # ---- cohorts + members (G11, G13, G24) ----
+
+  @G11 @groups
+  Scenario: Admin can create a cohort
+    When admin creates a cohort
+    Then the cohort is listed
+
+  @G13 @groups
+  Scenario: Admin can create cohorts with the same name (allowed, unlike groups)
+    When admin creates two cohorts with the same name
+    Then both cohorts with that name exist
+
+  @G24 @groups
+  Scenario: Admin can add the same user to multiple groups
+    When admin adds the same user to two groups
+    Then the user is a member of both groups

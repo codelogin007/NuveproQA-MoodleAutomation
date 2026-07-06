@@ -1,6 +1,8 @@
 package com.nuvepro.moodle.steps;
 
 import com.nuvepro.moodle.config.Settings;
+import com.nuvepro.moodle.helpers.ApiClient;
+import com.nuvepro.moodle.pages.AdminUsers;
 import com.nuvepro.moodle.pages.Groups;
 import io.cucumber.java.After;
 import io.cucumber.java.en.Then;
@@ -18,11 +20,20 @@ import static org.testng.Assert.assertTrue;
 public class GroupsSteps {
     private final TestContext ctx;
     private final Groups groups;
+    private final AdminUsers admin;
     private String groupName;
+    private String cohortName;
+    private String groupNameA;
+    private String groupNameB;
+    private String groupIdA;
+    private String groupIdB;
+    private String groupUserSearch;
+    private ApiClient.SeededUser groupUser;
 
     public GroupsSteps(TestContext ctx) {
         this.ctx = ctx;
         this.groups = new Groups(ctx.page);
+        this.admin = new AdminUsers(ctx.page);
     }
 
     private int courseId() {
@@ -115,11 +126,63 @@ public class GroupsSteps {
                 + "multiple-group selection is not supported by the UI");
     }
 
+    // ---- G11 create cohort, G13 duplicate cohort names allowed, G24 same user to multiple groups ----
+
+    @When("admin creates a cohort")
+    public void adminCreatesACohort() {
+        cohortName = "AutoCohort" + System.currentTimeMillis();
+        assertTrue(admin.cohortCreateSucceeded(cohortName, ""), "cohort was not created: " + cohortName);
+    }
+
+    @Then("the cohort is listed")
+    public void theCohortIsListed() {
+        assertTrue(admin.cohortListed(cohortName), "cohort not listed: " + cohortName);
+    }
+
+    @When("admin creates two cohorts with the same name")
+    public void adminCreatesTwoCohortsSameName() {
+        cohortName = "AutoDupCoh" + System.currentTimeMillis();
+        assertTrue(admin.cohortCreateSucceeded(cohortName, ""), "first cohort not created");
+        assertTrue(admin.cohortCreateSucceeded(cohortName, ""), "second (duplicate-name) cohort was rejected");
+    }
+
+    @Then("both cohorts with that name exist")
+    public void bothCohortsExist() {
+        assertTrue(admin.cohortCount(cohortName) >= 2,
+                "duplicate cohort names were not both created (count=" + admin.cohortCount(cohortName) + ")");
+    }
+
+    @When("admin adds the same user to two groups")
+    public void adminAddsSameUserToTwoGroups() {
+        if (Settings.WS_TOKEN.isEmpty()) throw new SkipException("MOODLE_WS_TOKEN not set");
+        long s = System.currentTimeMillis();
+        groupNameA = "MulGrpA" + s;
+        groupNameB = "MulGrpB" + s;
+        groupIdA = groups.createGroupReturningId(courseId(), groupNameA);
+        groupIdB = groups.createGroupReturningId(courseId(), groupNameB);
+        groupUser = ApiClient.createUser(s);
+        ApiClient.enrolUser(groupUser.id, courseId(), 5);           // must be enrolled to join a group
+        groupUserSearch = "Test" + groupUser.username.substring("autotest_".length());
+        groups.addUserToGroup(groupIdA, groupUserSearch);
+        groups.addUserToGroup(groupIdB, groupUserSearch);
+    }
+
+    @Then("the user is a member of both groups")
+    public void theUserIsAMemberOfBothGroups() {
+        assertTrue(groups.userInGroup(groupIdA, groupUserSearch), "user not a member of group A");
+        assertTrue(groups.userInGroup(groupIdB, groupUserSearch), "user not a member of group B");
+    }
+
     @After("@groups")
     public void cleanupGroup() {
-        if (groupName != null) {
-            try { groups.deleteGroups(courseId(), groupName); } catch (Throwable ignored) {}
-            groupName = null;
+        for (String gn : new String[]{groupName, groupNameA, groupNameB}) {
+            if (gn != null) { try { groups.deleteGroups(courseId(), gn); } catch (Throwable ignored) {} }
         }
+        if (cohortName != null) {
+            try { for (int i = 0; i < 3; i++) admin.cohortDelete(cohortName); } catch (Throwable ignored) {}
+        }
+        if (groupUser != null) { try { ApiClient.deleteUser(groupUser.id); } catch (Throwable ignored) {} }
+        groupName = groupNameA = groupNameB = cohortName = null;
+        groupUser = null;
     }
 }
