@@ -45,6 +45,19 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 - ⏸️ T30-T39 (tags on Orgo lab-details page + resource-duration report — EXTERNAL Orgo/cloudlabs reports)
 - ⏸️ T40 (admin blocks tag editing — config), CGAP-T gaps (T-2 dedup, T-5 browse, T-7 reuse+count, T-10 length cap are automatable)
 
+## Roles  — tag `@rolematrix`
+- ✅ **Cloudlabs capability matrix (R24-R79)**: 5 data-driven scenarios verify all 12 cloudlabs caps
+  per role vs db/access.php defaults (Manager/CourseCreator/EditingTeacher=allow, non-editing=notset,
+  student=prevent). Admins bypass checks (not verified). All green.
+- ✅ **Finding caught + fixed**: on 2026-07-06 flagged Editing-teacher (missing 4 lab caps) and
+  Non-editing-teacher (had 2 assessment caps vs R66); site config corrected; re-run confirms fixed.
+  See ../Docs/Roles_Findings.md.
+- 🔲 Custom roles R86-R88 (create role, enable capability, appears in enrol dropdown)
+- 🔲 Functional easy subset: R2 (admin site access), R3/R17 (assign role / system manager)
+- 🔲 Enforcement gaps CGAP-R-1/2/7 (control visible/hidden by capability at runtime), R80-R85 UI integration
+- ⏸️ R1/R5-R16 broad functional (course create/grade/submit/forum — overlaps other sheets)
+- ✅ Gap rows CGAP-R-1..12 written into the Moodle_Roles sheet
+
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Assessment (challenge) — largest sheet (~145+); cloudlabs provisioning
 - 🔲 Roles (88), Groups (46), Reports (46 — cloudlabs report), Activities (48), All Course Page (44)
