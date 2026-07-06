@@ -56,8 +56,10 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
   cloudlabs caps) → listed → capabilities enabled. Role deleted at teardown.
 - 🔲 **R88** deferred: custom role in the "Enrol users" dropdown — a fresh role likely needs
   "allow role assignment" config first; step SKIPS with a reason (AJAX enrol-modal + allow-assign work)
-- 🔲 Functional easy subset: R2 (admin site access), R3/R17 (assign role / system manager)
+- ✅ **Functional subset** (`@rolefunc`): R2 (admin Site Administration access), R17 (assign Manager →
+  system manager), R3 (assign then remove a role) — all green (system-context dual-listbox assign)
 - 🔲 Enforcement gaps CGAP-R-1/2/7 (control visible/hidden by capability at runtime), R80-R85 UI integration
+- ⏸️ R88 custom role in enrol dropdown (deferred — allow-assign / AJAX modal)
 - ⏸️ R1/R5-R16 broad functional (course create/grade/submit/forum — overlaps other sheets)
 - ✅ Gap rows CGAP-R-1..12 written into the Moodle_Roles sheet
 

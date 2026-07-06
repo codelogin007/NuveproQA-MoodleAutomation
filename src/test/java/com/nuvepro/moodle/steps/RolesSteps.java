@@ -1,7 +1,9 @@
 package com.nuvepro.moodle.steps;
 
 import com.nuvepro.moodle.config.Settings;
+import com.nuvepro.moodle.helpers.ApiClient;
 import com.nuvepro.moodle.pages.CustomRole;
+import com.nuvepro.moodle.pages.RoleAssign;
 import com.nuvepro.moodle.pages.RolePermissions;
 import io.cucumber.java.After;
 import io.cucumber.java.en.Then;
@@ -9,6 +11,7 @@ import io.cucumber.java.en.When;
 import org.testng.SkipException;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
@@ -21,14 +24,20 @@ public class RolesSteps {
     private final TestContext ctx;
     private final RolePermissions rolePerms;
     private final CustomRole customRole;
+    private final RoleAssign roleAssign;
     private String createdRoleId;
     private String createdRoleName;
+    private ApiClient.SeededUser roleUser;
+    private String roleUserSearch;   // full-name term the user selector matches on
 
     public RolesSteps(TestContext ctx) {
         this.ctx = ctx;
         this.rolePerms = new RolePermissions(ctx.page);
         this.customRole = new CustomRole(ctx.page);
+        this.roleAssign = new RoleAssign(ctx.page);
     }
+
+    private static final int MANAGER_ROLE_ID = 1;
 
     @Then("the {string} role id {int} has cloudlabs capabilities {string}")
     public void roleHasCloudlabsCapabilities(String roleName, int roleId, String expected) {
@@ -84,6 +93,56 @@ public class RolesSteps {
         if (createdRoleId != null) {
             try { customRole.deleteRole(createdRoleId); } catch (Throwable ignored) {}
             createdRoleId = null;
+        }
+    }
+
+    // ---- R2 site admin access, R3 assign/remove role, R17 set system manager ----
+
+    @Then("admin can access site administration")
+    public void adminCanAccessSiteAdministration() {
+        ctx.page.navigate(Settings.BASE_URL + "/admin/search.php",
+                new com.microsoft.playwright.Page.NavigateOptions()
+                        .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED).setTimeout(45_000));
+        ctx.page.waitForTimeout(1_500);
+        String body = ctx.page.locator("body").innerText().toLowerCase();
+        assertTrue(body.contains("site administration") && !body.contains("access denied"),
+                "admin could not access Site Administration");
+    }
+
+    @When("admin assigns the Manager role to a new user at system level")
+    public void adminAssignsManagerToNewUser() {
+        if (Settings.WS_TOKEN.isEmpty()) throw new SkipException("MOODLE_WS_TOKEN not set");
+        roleUser = ApiClient.createUser(System.currentTimeMillis());
+        // WS user full name is "Auto Test<stamp>"; the user selector matches on full name.
+        roleUserSearch = "Test" + roleUser.username.substring("autotest_".length());
+        roleAssign.openSystemRoleAssign(MANAGER_ROLE_ID);
+        roleAssign.assignUser(roleUserSearch);
+    }
+
+    @Then("the user is a system manager")
+    public void theUserIsASystemManager() {
+        assertTrue(roleAssign.userAssigned(roleUserSearch),
+                "user was not assigned the Manager role at system level: " + roleUser.email);
+    }
+
+    @When("admin removes the Manager role from the user")
+    public void adminRemovesManagerFromUser() {
+        roleAssign.removeUser(roleUserSearch);
+    }
+
+    @Then("the user is no longer a system manager")
+    public void theUserIsNoLongerASystemManager() {
+        roleAssign.openSystemRoleAssign(MANAGER_ROLE_ID);
+        assertFalse(roleAssign.userAssigned(roleUserSearch),
+                "user is still assigned the Manager role: " + roleUser.email);
+    }
+
+    @After("@roleassign")
+    public void cleanupRoleUser() {
+        if (roleUser != null) {
+            try { roleAssign.openSystemRoleAssign(MANAGER_ROLE_ID); roleAssign.removeUser(roleUserSearch); } catch (Throwable ignored) {}
+            try { ApiClient.deleteUser(roleUser.id); } catch (Throwable ignored) {}
+            roleUser = null;
         }
     }
 }
