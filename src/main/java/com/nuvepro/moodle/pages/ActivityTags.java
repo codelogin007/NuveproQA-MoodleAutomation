@@ -86,4 +86,24 @@ public class ActivityTags extends BasePage {
         expandTags();
         return chipPresent(tag);
     }
+
+    /**
+     * Whether {@code tag} is offered as an EXISTING suggestion in the activity tag autocomplete.
+     * Types the tag name and looks for a suggestion option whose text exactly equals it. A
+     * non-existent/non-standard tag yields no matching option (typing a new name shows none here).
+     * Does not commit or save — clears the input afterwards.
+     */
+    public boolean suggestionShows(int cmid, String tag) {
+        openEdit(cmid);
+        expandTags();
+        Locator inp = page.locator(TAG_INPUT).first();
+        inp.click();
+        inp.fill(tag);
+        page.waitForTimeout(1_600);
+        Object shown = page.evaluate(
+                "(t) => Array.from(document.querySelectorAll('.form-autocomplete-suggestions [role=option]'))"
+                + ".some(e => (e.textContent||'').trim() === t)", tag);
+        try { inp.fill(""); } catch (Throwable ignored) {}
+        return Boolean.TRUE.equals(shown);
+    }
 }

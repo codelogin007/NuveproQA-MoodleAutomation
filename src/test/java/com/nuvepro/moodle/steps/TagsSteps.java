@@ -252,4 +252,74 @@ public class TagsSteps {
         manage.selectTag(tagA);           // cleanup
         manage.deleteSelected();
     }
+
+    // ---- standard tags in the activity autocomplete (T19-T23, T26) ----
+
+    private void cleanupTag(String name) {
+        try {
+            manage.open();
+            if (name != null && manage.tagExists(name)) { manage.selectTag(name); manage.deleteSelected(); }
+        } catch (Throwable ignored) {}
+    }
+
+    @Given("a standard tag exists")
+    public void aStandardTagExists() {
+        manage.open();
+        tagA = "aadrp" + System.currentTimeMillis();
+        manage.addStandardTag(tagA);
+        manage.open();
+        assertTrue(manage.tagExists(tagA), "standard tag was not created: " + tagA);
+    }
+
+    @Given("two standard tags exist")
+    public void twoStandardTagsExist() {
+        manage.open();
+        long s = System.currentTimeMillis();
+        tagA = "aadrp" + s + "a";
+        tagB = "aadrp" + s + "b";
+        manage.addStandardTag(tagA);
+        manage.addStandardTag(tagB);
+        manage.open();
+        assertTrue(manage.tagExists(tagA) && manage.tagExists(tagB), "two standard tags were not created");
+    }
+
+    @When("admin removes the standard mark from the tag")
+    public void adminRemovesTheStandardMarkFromTheTag() {
+        manage.open();
+        manage.toggleStandard(tagA);
+    }
+
+    @Then("the tag is suggested in the activity tag field")
+    public void theTagIsSuggested() {
+        assertTrue(tags.suggestionShows(cmid(), tagA), "standard tag not suggested: " + tagA);
+        cleanupTag(tagA);
+    }
+
+    @Then("both tags are suggested in the activity tag field")
+    public void bothTagsAreSuggested() {
+        assertTrue(tags.suggestionShows(cmid(), tagA), "tag A not suggested: " + tagA);
+        assertTrue(tags.suggestionShows(cmid(), tagB), "tag B not suggested: " + tagB);
+        cleanupTag(tagA);
+        cleanupTag(tagB);
+    }
+
+    @Then("the tag is not suggested in the activity tag field")
+    public void theTagIsNotSuggested() {
+        assertFalse(tags.suggestionShows(cmid(), tagA), "tag still suggested: " + tagA);
+        cleanupTag(tagA);
+    }
+
+    @Then("the renamed tag is suggested and the old name is not")
+    public void theRenamedTagIsSuggestedAndOldIsNot() {
+        assertTrue(tags.suggestionShows(cmid(), tagRenamed), "renamed tag not suggested: " + tagRenamed);
+        assertFalse(tags.suggestionShows(cmid(), tagA), "old tag name still suggested: " + tagA);
+        cleanupTag(tagRenamed);
+    }
+
+    @Then("the surviving tag is suggested and the merged tag is not")
+    public void theSurvivingTagIsSuggested() {
+        assertTrue(tags.suggestionShows(cmid(), tagA), "surviving tag not suggested: " + tagA);
+        assertFalse(tags.suggestionShows(cmid(), tagB), "merged tag still suggested: " + tagB);
+        cleanupTag(tagA);
+    }
 }

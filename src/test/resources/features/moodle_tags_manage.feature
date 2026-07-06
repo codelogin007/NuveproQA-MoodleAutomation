@@ -40,3 +40,39 @@ Feature: Moodle tag management
     Given a new standard tag
     When admin tries to combine a single selected tag
     Then the single tag is unchanged
+
+  # ---- standard tags in the activity autocomplete (T19-T23, T26) ----
+
+  @T19 @tagmgmt
+  Scenario: A standard tag is suggested in the activity tag field
+    Given a standard tag exists
+    Then the tag is suggested in the activity tag field
+
+  @T20 @tagmgmt
+  Scenario: All standard tags are suggested in the activity tag field
+    Given two standard tags exist
+    Then both tags are suggested in the activity tag field
+
+  @T21 @tagmgmt
+  Scenario: A deleted tag is no longer suggested
+    Given a standard tag exists
+    When admin deletes the tag
+    Then the tag is not suggested in the activity tag field
+
+  @T22 @tagmgmt
+  Scenario: A tag with its standard mark removed is no longer suggested
+    Given a standard tag exists
+    When admin removes the standard mark from the tag
+    Then the tag is not suggested in the activity tag field
+
+  @T23 @tagmgmt
+  Scenario: A renamed tag is suggested under its new name
+    Given a standard tag exists
+    When admin renames the tag
+    Then the renamed tag is suggested and the old name is not
+
+  @T26 @tagmgmt
+  Scenario: A merged (combined) tag is no longer suggested
+    Given two standard tags exist
+    When admin combines the two tags keeping the first
+    Then the surviving tag is suggested and the merged tag is not
