@@ -52,7 +52,10 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 - ✅ **Finding caught + fixed**: on 2026-07-06 flagged Editing-teacher (missing 4 lab caps) and
   Non-editing-teacher (had 2 assessment caps vs R66); site config corrected; re-run confirms fixed.
   See ../Docs/Roles_Findings.md.
-- 🔲 Custom roles R86-R88 (create role, enable capability, appears in enrol dropdown)
+- ✅ **Custom roles R86-R87** (`@customrole`): create a custom role from an archetype preset (gets
+  cloudlabs caps) → listed → capabilities enabled. Role deleted at teardown.
+- 🔲 **R88** deferred: custom role in the "Enrol users" dropdown — a fresh role likely needs
+  "allow role assignment" config first; step SKIPS with a reason (AJAX enrol-modal + allow-assign work)
 - 🔲 Functional easy subset: R2 (admin site access), R3/R17 (assign role / system manager)
 - 🔲 Enforcement gaps CGAP-R-1/2/7 (control visible/hidden by capability at runtime), R80-R85 UI integration
 - ⏸️ R1/R5-R16 broad functional (course create/grade/submit/forum — overlaps other sheets)
