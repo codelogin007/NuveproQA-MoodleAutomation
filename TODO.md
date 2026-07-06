@@ -3,6 +3,9 @@
 Deferred work items and scope decisions. See `CLAUDE.md` for the standing conventions these follow.
 Keep this updated as phases complete.
 
+> **Live module status (done / open / deferred) lives in `PROGRESS.md`** — the single reference for
+> what's automated and what's pending. This file holds the longer-lived scope decisions + backlog notes.
+
 ## Scope decisions (locked)
 - **Priority:** automate **High then Medium** first; **Low-priority cases are deferred** (not now).
   Respect the `Importance` column set by QA.
@@ -32,10 +35,12 @@ template type. Each needs an activity configured with that template type (record
 - [ ] Review §E (~22 candidate gaps) → accept/trim → add approved as `CGAP-PG-40+`.
 - [ ] Then automate the full playground set (Account templates) and mark playground complete.
 
-## Next modules (apply the same coverage-matrix method)
-- [ ] Guided (practice project) — coverage matrix → gap cases → automate.
-- [ ] Assessment (challenge) — coverage matrix → gap cases → automate (largest sheet, 145+).
-- [ ] Then Users, Roles, Reports, Manage-labs/Activities, All-Course-Page, Settings, Tags, Groups, cron, etc.
+## Next modules (apply the same coverage-matrix method) — see PROGRESS.md for current state
+- [x] Guided (presence batch done; lab-actions/attempt-lifecycle open — see PROGRESS.md)
+- [x] Users (~24 green; setup-dependent cases open)
+- [x] Tags (creation + management done; T17/T41 open, Orgo deferred)
+- [ ] Assessment (challenge) — largest sheet (~145+); coverage matrix → gap cases → automate.
+- [ ] Then Roles, Reports, Activities, All-Course-Page, Settings, Groups, cron, etc.
 
 ## Cosmetic note (NOT a functional defect — retracted 2026-07-02)
 - Manage Labs `#np-ap-manage-delete-btn` keeps a harmless `disabled` ATTRIBUTE in the "normal lab"
