@@ -36,3 +36,88 @@ Feature: Moodle activity tags
     And I add the tag "AutoTagAlpha"
     And I save the activity
     Then the tag is present on the activity
+
+  # ---- input variations (T2-T15) ----
+
+  @T2 @tags
+  Scenario: A 1-character tag can be added
+    When I open the activity edit form
+    And I add a tag of 1 characters
+    And I save the activity
+    Then the tag is present on the activity
+
+  @T3 @tags
+  Scenario: A 49-character tag can be added
+    When I open the activity edit form
+    And I add a tag of 49 characters
+    And I save the activity
+    Then the tag is present on the activity
+
+  @T4 @tags
+  Scenario: A 50-character tag can be added
+    When I open the activity edit form
+    And I add a tag of 50 characters
+    And I save the activity
+    Then the tag is present on the activity
+
+  @T5 @tags
+  Scenario: A 51-character tag can be added
+    When I open the activity edit form
+    And I add a tag of 51 characters
+    And I save the activity
+    Then the tag is present on the activity
+
+  @T8 @tags
+  Scenario: A tag with special characters can be added
+    When I open the activity edit form
+    And I add the tag "tag-name_1.2"
+    And I save the activity
+    Then the tag is present on the activity
+
+  @T9 @tags
+  Scenario: A number-and-alphabetic tag can be added
+    When I open the activity edit form
+    And I add the tag "abc123def"
+    And I save the activity
+    Then the tag is present on the activity
+
+  @T10 @tags
+  Scenario: A number-and-special-character tag can be added
+    When I open the activity edit form
+    And I add the tag "123-45_6"
+    And I save the activity
+    Then the tag is present on the activity
+
+  @T11 @tags
+  Scenario: An alphabetic-and-special-character tag can be added
+    When I open the activity edit form
+    And I add the tag "abc-de_f"
+    And I save the activity
+    Then the tag is present on the activity
+
+  @T12 @tags
+  Scenario: A number-special-alphabetic tag can be added
+    When I open the activity edit form
+    And I add the tag "ab1-c2_d"
+    And I save the activity
+    Then the tag is present on the activity
+
+  @T13 @tags
+  Scenario: A blank tag is not created
+    When I open the activity edit form
+    And I add a blank tag
+    Then no tag is added
+
+  @T14 @tags
+  Scenario: A tag with leading and trailing spaces is trimmed
+    When I open the activity edit form
+    And I enter the tag "  Spacedtag  "
+    And I save the activity
+    Then the trimmed tag "Spacedtag" is present on the activity
+
+  @T15 @tags
+  Scenario: Comma-separated values create multiple tags
+    When I open the activity edit form
+    And I enter the tag "commaone,commatwo"
+    And I save the activity
+    Then both tags "commaone" and "commatwo" are present on the activity

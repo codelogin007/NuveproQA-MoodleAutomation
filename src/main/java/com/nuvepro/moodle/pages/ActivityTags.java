@@ -23,15 +23,15 @@ public class ActivityTags extends BasePage {
         page.waitForTimeout(1_500);   // let the form-autocomplete JS enhance the tags select
     }
 
-    /** Expand the (collapsed-by-default) Tags section — based on container visibility, not a class string. */
+    /** Expand the (collapsed-by-default) Tags section — retry until the container is visible. */
     public void expandTags() {
         Locator container = page.locator("#id_tagshdrcontainer");
         Locator toggle = page.locator("a[href='#id_tagshdrcontainer']");
-        if (toggle.count() > 0) {
-            boolean expanded = container.count() > 0 && container.first().isVisible();
-            if (!expanded) {
-                toggle.first().click();
-                page.waitForTimeout(800);
+        for (int i = 0; i < 3; i++) {
+            if (container.count() > 0 && container.first().isVisible()) return;
+            if (toggle.count() > 0) {
+                try { toggle.first().click(); } catch (Throwable ignored) {}
+                page.waitForTimeout(700);
             }
         }
     }
@@ -42,19 +42,30 @@ public class ActivityTags extends BasePage {
         return inp.count() > 0 && inp.first().isVisible();
     }
 
-    /** Type a tag into the autocomplete and commit it (Enter creates a free-text tag). */
-    public void addTag(String tag) {
+    /** Type text into the autocomplete and commit with Enter (no assertion). */
+    public void typeAndEnter(String text) {
         expandTags();
         Locator inp = page.locator(TAG_INPUT).first();
         inp.click();
-        inp.fill(tag);
-        page.waitForTimeout(600);
+        inp.fill(text);
+        page.waitForTimeout(500);
         page.keyboard().press("Enter");
         page.waitForTimeout(700);
     }
 
+    /** Type a tag into the autocomplete and commit it (Enter creates a free-text tag). */
+    public void addTag(String tag) {
+        typeAndEnter(tag);
+    }
+
     public boolean chipPresent(String tag) {
         return page.locator(".form-autocomplete-selection:has-text('" + tag + "')").count() > 0;
+    }
+
+    /** Number of committed tag chips in the selection region. */
+    public int chipCount() {
+        return page.locator(".form-autocomplete-selection [role='option'], "
+                + ".form-autocomplete-selection [role='listitem']").count();
     }
 
     /** Save (Save and display -> the activity view). */
