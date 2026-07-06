@@ -64,10 +64,13 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 - ✅ Gap rows CGAP-R-1..12 written into the Moodle_Roles sheet
 
 ## Groups  — tag `@groups`
-- ✅ Create group (G12), duplicate-name rejected (G14 - Moodle enforces unique names per course;
-  manual expected duplicates allowed → corrected), groups dropdown present on Manage User Labs (G1)
-- 🔲 Groups dropdown single/multi/search/default (G2-G5), report export by group (G6-G10, G27-G37),
-  create/manage cohorts + members (G11-G24), cohort enrolment + sync (G25-G33, G45-G46), groups column (G34/G42)
+- ✅ Create group (G12), duplicate-name rejected (G14 - Moodle enforces unique names; manual expected
+  duplicates allowed → corrected), groups dropdown present (G1), default All Groups (G5), select single
+  group (G2), search in dropdown (G4), groups column on Manage User Labs (G42)
+- ⏸️ G3 select-multiple: SKIPS - the dropdown is single-select (All Groups or one), so multi-select is
+  not supported by the UI (documented)
+- 🔲 Report export by group (G6-G10, G27-G37), create/manage cohorts + members (G11-G24),
+  cohort enrolment + sync (G25-G33, G45-G46), groups column on other reports (G34)
 - ⏸️ Duration/time-based (G26/G30-G33/G43)
 - ✅ Gap rows CGAP-GR-1..11 in the Groups_Testcases sheet
 

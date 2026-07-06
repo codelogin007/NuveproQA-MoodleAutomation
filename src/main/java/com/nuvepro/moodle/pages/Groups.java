@@ -36,21 +36,63 @@ public class Groups extends BasePage {
 
     /** Delete every group matching {@code name} (one per pass — deletion re-renders the list). */
     public void deleteGroups(int courseId, String name) {
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 8; i++) {
             navigate("/group/index.php?id=" + courseId);
             page.waitForTimeout(1_000);
             Locator opt = page.locator("#groups option").filter(new Locator.FilterOptions().setHasText(name));
             if (opt.count() == 0) return;
             opt.first().click();
-            Locator del = page.locator("input[value='Delete selected group'], button:has-text('Delete selected group')");
+            page.waitForTimeout(300);
+            Locator del = page.locator("#deletegroup");   // <input name=action value=deletegroup>
             if (del.count() == 0) return;
             del.first().click();
             page.waitForTimeout(1_000);
-            Locator yes = page.locator("input[value='Yes'], button:has-text('Yes'), "
-                    + "button:has-text('Delete'), #region-main .btn-primary");
+            Locator yes = page.locator("input[name='delete'], input[value='Yes'], "
+                    + "button:has-text('Yes'), #region-main .btn-primary");
             if (yes.count() > 0 && yes.first().isVisible()) yes.first().click();
             page.waitForTimeout(1_500);
         }
+    }
+
+    // ---- groups filter dropdown (#course_groups, single-select select2) on Manage User Labs ----
+
+    /** The currently selected group label in the dropdown (default "All Groups"). */
+    public String selectedGroup() {
+        Locator sel = page.locator("#course_groups option[selected], #course_groups option:checked");
+        if (sel.count() > 0) return sel.first().innerText().trim();
+        // fall back to the select2 rendered text
+        Locator r = page.locator("#select2-course_groups-container, .select2-selection__rendered");
+        return r.count() > 0 ? r.first().innerText().trim() : "";
+    }
+
+    /** Select a single group by name via the underlying select (select2 syncs on change). */
+    public void selectGroup(String name) {
+        page.selectOption("#course_groups", new com.microsoft.playwright.options.SelectOption().setLabel(name));
+        page.waitForTimeout(1_000);
+    }
+
+    public boolean labsTableHasGroupColumn() {
+        return page.locator("#np-ap-manage-lab-table th, table th")
+                .filter(new Locator.FilterOptions().setHasText("Group")).count() > 0;
+    }
+
+    public boolean isGroupsDropdownSingleSelect() {
+        String multiple = page.locator("#course_groups").getAttribute("multiple");
+        return multiple == null;   // native <select multiple> would have the attribute
+    }
+
+    /** Open the select2, type a group name, and whether it appears in the filtered results. */
+    public boolean searchGroupInDropdown(String name) {
+        Locator container = page.locator("#select2-course_groups-container, .select2-selection");
+        if (container.count() > 0) container.first().click();
+        page.waitForTimeout(600);
+        Locator search = page.locator("input.select2-search__field, .select2-search__field");
+        if (search.count() > 0) {
+            search.first().fill(name);
+            page.waitForTimeout(1_000);
+        }
+        return page.locator(".select2-results__option")
+                .filter(new Locator.FilterOptions().setHasText(name)).count() > 0;
     }
 
     public void openManageLabs(int sectionId) {

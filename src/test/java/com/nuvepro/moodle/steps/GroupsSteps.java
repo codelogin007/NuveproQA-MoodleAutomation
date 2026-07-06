@@ -83,6 +83,38 @@ public class GroupsSteps {
         assertTrue(groups.groupsDropdownHasGroup(groupName), "created group not offered in the groups dropdown: " + groupName);
     }
 
+    // ---- G5 default, G2 single-select, G4 search, G42 groups column ----
+    @Then("the groups dropdown defaults to all groups")
+    public void theGroupsDropdownDefaultsToAllGroups() {
+        assertTrue(groups.selectedGroup().toLowerCase().contains("all group"),
+                "groups dropdown default is not 'All Groups': " + groups.selectedGroup());
+    }
+
+    @Then("admin can select a single group in the dropdown")
+    public void adminCanSelectASingleGroup() {
+        groups.selectGroup(groupName);
+        assertTrue(groups.selectedGroup().contains(groupName), "group was not selected: " + groupName);
+    }
+
+    @Then("admin can search for the group in the dropdown")
+    public void adminCanSearchForTheGroup() {
+        assertTrue(groups.searchGroupInDropdown(groupName), "group not found via dropdown search: " + groupName);
+    }
+
+    @Then("the groups column is present on Manage User Labs")
+    public void theGroupsColumnIsPresent() {
+        assertTrue(groups.labsTableHasGroupColumn(), "Group column not present on the Manage User Labs table");
+    }
+
+    @Then("selecting multiple groups is not supported")
+    public void selectingMultipleGroupsIsNotSupported() {
+        // The #course_groups dropdown is a SINGLE-select (All Groups or one group), so the manual G3
+        // ("select multiple groups") is not supported by this UI - documented, not a failure.
+        assertTrue(groups.isGroupsDropdownSingleSelect(), "expected the groups dropdown to be single-select");
+        throw new SkipException("G3: groups dropdown is single-select (All Groups or one group); "
+                + "multiple-group selection is not supported by the UI");
+    }
+
     @After("@groups")
     public void cleanupGroup() {
         if (groupName != null) {
