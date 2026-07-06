@@ -2,11 +2,14 @@ package com.nuvepro.moodle.steps;
 
 import com.nuvepro.moodle.config.Settings;
 import com.nuvepro.moodle.pages.ActivityTags;
+import com.nuvepro.moodle.pages.TagManage;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.testng.SkipException;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -17,12 +20,18 @@ import static org.testng.Assert.assertTrue;
 public class TagsSteps {
     private final TestContext ctx;
     private final ActivityTags tags;
+    private final TagManage manage;
     private String lastTag;
     private int chipsBefore;
+    private String tagA;
+    private String tagB;
+    private String tagC;
+    private String tagRenamed;
 
     public TagsSteps(TestContext ctx) {
         this.ctx = ctx;
         this.tags = new ActivityTags(ctx.page);
+        this.manage = new TagManage(ctx.page);
     }
 
     private int cmid() {
@@ -115,5 +124,132 @@ public class TagsSteps {
         tags.expandTags();
         assertTrue(tags.chipPresent(a), "first comma-separated tag not present: " + a);
         assertTrue(tags.chipPresent(b), "second comma-separated tag not present: " + b);
+    }
+
+    // ---- tag management (/tag/manage.php) : T16 rename, T18 delete, T28 multi-delete ----
+
+    @Given("a new standard tag")
+    public void aNewStandardTag() {
+        manage.open();
+        tagA = "aatst" + System.currentTimeMillis();
+        manage.addStandardTag(tagA);
+        manage.open();
+        assertTrue(manage.tagExists(tagA), "standard tag was not created: " + tagA);
+    }
+
+    @Given("two new standard tags")
+    public void twoNewStandardTags() {
+        manage.open();
+        long s = System.currentTimeMillis();
+        tagA = "aatst" + s + "a";
+        tagB = "aatst" + s + "b";
+        manage.addStandardTag(tagA);
+        manage.addStandardTag(tagB);
+        manage.open();
+        assertTrue(manage.tagExists(tagA) && manage.tagExists(tagB), "two standard tags were not created");
+    }
+
+    @When("admin renames the tag")
+    public void adminRenamesTheTag() {
+        tagRenamed = tagA + "r";
+        manage.renameTag(tagA, tagRenamed);
+        manage.open();
+    }
+
+    @Then("the renamed tag exists and the old name does not")
+    public void theRenamedTagExistsAndTheOldNameDoesNot() {
+        assertTrue(manage.tagExists(tagRenamed), "renamed tag not found: " + tagRenamed);
+        assertFalse(manage.tagExists(tagA), "old tag name still present: " + tagA);
+        manage.selectTag(tagRenamed);           // cleanup
+        manage.deleteSelected();
+    }
+
+    @When("admin deletes the tag")
+    public void adminDeletesTheTag() {
+        manage.selectTag(tagA);
+        manage.deleteSelected();
+        manage.open();
+    }
+
+    @Then("the tag no longer exists")
+    public void theTagNoLongerExists() {
+        assertFalse(manage.tagExists(tagA), "tag still exists after delete: " + tagA);
+    }
+
+    @When("admin deletes both tags")
+    public void adminDeletesBothTags() {
+        manage.selectTag(tagA);
+        manage.selectTag(tagB);
+        manage.deleteSelected();
+        manage.open();
+    }
+
+    @Then("neither tag exists")
+    public void neitherTagExists() {
+        assertFalse(manage.tagExists(tagA) || manage.tagExists(tagB), "a tag still exists after multi-delete");
+    }
+
+    // ---- combine (T24 two, T25 three, T29 single) ----
+
+    @Given("three new standard tags")
+    public void threeNewStandardTags() {
+        manage.open();
+        long s = System.currentTimeMillis();
+        tagA = "aatst" + s + "a";
+        tagB = "aatst" + s + "b";
+        tagC = "aatst" + s + "c";
+        manage.addStandardTag(tagA);
+        manage.addStandardTag(tagB);
+        manage.addStandardTag(tagC);
+        manage.open();
+        assertTrue(manage.tagExists(tagA) && manage.tagExists(tagB) && manage.tagExists(tagC),
+                "three standard tags were not created");
+    }
+
+    @When("admin combines the two tags keeping the first")
+    public void adminCombinesTheTwoTagsKeepingTheFirst() {
+        manage.selectTag(tagA);
+        manage.selectTag(tagB);
+        manage.combineSelected(tagA);
+        manage.open();
+    }
+
+    @Then("only the surviving tag remains")
+    public void onlyTheSurvivingTagRemains() {
+        assertTrue(manage.tagExists(tagA), "surviving tag missing after combine: " + tagA);
+        assertFalse(manage.tagExists(tagB), "merged tag still present after combine: " + tagB);
+        manage.selectTag(tagA);           // cleanup
+        manage.deleteSelected();
+    }
+
+    @When("admin combines the three tags keeping the first")
+    public void adminCombinesTheThreeTagsKeepingTheFirst() {
+        manage.selectTag(tagA);
+        manage.selectTag(tagB);
+        manage.selectTag(tagC);
+        manage.combineSelected(tagA);
+        manage.open();
+    }
+
+    @Then("only the first of the three tags remains")
+    public void onlyTheFirstOfTheThreeTagsRemains() {
+        assertTrue(manage.tagExists(tagA), "surviving tag missing: " + tagA);
+        assertFalse(manage.tagExists(tagB) || manage.tagExists(tagC), "a merged tag still present");
+        manage.selectTag(tagA);           // cleanup
+        manage.deleteSelected();
+    }
+
+    @When("admin tries to combine a single selected tag")
+    public void adminTriesToCombineASingleSelectedTag() {
+        manage.selectTag(tagA);
+        try { manage.combineSelected(tagA); } catch (Throwable ignored) {}
+        manage.open();
+    }
+
+    @Then("the single tag is unchanged")
+    public void theSingleTagIsUnchanged() {
+        assertTrue(manage.tagExists(tagA), "single-tag combine lost the tag: " + tagA);
+        manage.selectTag(tagA);           // cleanup
+        manage.deleteSelected();
     }
 }
