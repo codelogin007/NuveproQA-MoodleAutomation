@@ -73,11 +73,12 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Assessment (challenge) — largest sheet (~145+); cloudlabs provisioning
-- 🔲 Roles (88), Groups (46), Reports (46 — cloudlabs report), Activities (48), All Course Page (44)
+- 🔲 Reports (46 — cloudlabs report), Activities (48), All Course Page (44)
 - 🔲 Settings, cron, Logs, Lab_Templates, LTI & SSO, Cloudlabs Integration, LoadBalancer
+- (Roles + Groups: first batches done — see their sections above; remainder open there)
 
 ## Gap rows written into the xlsx (derived, `CGAP-*`)
-- ✅ `Moodle_users`: CGAP-U-1..12 · ✅ `Moodle_Tags`: CGAP-T-1..11
+- ✅ `Moodle_users`: CGAP-U-1..12 · `Moodle_Tags`: CGAP-T-1..11 · `Moodle_Roles`: CGAP-R-1..12 · `Groups_Testcases`: CGAP-GR-1..11
 - 🔲 Playground/Guided gaps live in the matrix `.md` docs — not yet appended to their sheets
 
 ## Infra / cross-cutting
