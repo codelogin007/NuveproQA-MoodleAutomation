@@ -1,0 +1,78 @@
+package com.nuvepro.moodle.pages;
+
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.WaitForSelectorState;
+
+/**
+ * Tags on an activity's edit form (/course/modedit.php). The Tags section is collapsible and
+ * starts collapsed; the field is a Moodle form-autocomplete (type + Enter adds a free-text tag).
+ */
+public class ActivityTags extends BasePage {
+    // the autocomplete typing input lives under the tags container (not always under #fitem_id_tags)
+    private static final String TAG_INPUT = "#id_tagshdrcontainer input[type='text'], #fitem_id_tags input[type='text']";
+
+    public ActivityTags(Page page) {
+        super(page);
+    }
+
+    public void openEdit(int cmid) {
+        navigate("/course/modedit.php?update=" + cmid);
+        page.locator("#id_submitbutton, #id_submitbutton2").first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE).setTimeout(30_000));
+        page.waitForTimeout(1_500);   // let the form-autocomplete JS enhance the tags select
+    }
+
+    /** Expand the (collapsed-by-default) Tags section — based on container visibility, not a class string. */
+    public void expandTags() {
+        Locator container = page.locator("#id_tagshdrcontainer");
+        Locator toggle = page.locator("a[href='#id_tagshdrcontainer']");
+        if (toggle.count() > 0) {
+            boolean expanded = container.count() > 0 && container.first().isVisible();
+            if (!expanded) {
+                toggle.first().click();
+                page.waitForTimeout(800);
+            }
+        }
+    }
+
+    public boolean tagsFieldPresent() {
+        expandTags();
+        Locator inp = page.locator(TAG_INPUT);
+        return inp.count() > 0 && inp.first().isVisible();
+    }
+
+    /** Type a tag into the autocomplete and commit it (Enter creates a free-text tag). */
+    public void addTag(String tag) {
+        expandTags();
+        Locator inp = page.locator(TAG_INPUT).first();
+        inp.click();
+        inp.fill(tag);
+        page.waitForTimeout(600);
+        page.keyboard().press("Enter");
+        page.waitForTimeout(700);
+    }
+
+    public boolean chipPresent(String tag) {
+        return page.locator(".form-autocomplete-selection:has-text('" + tag + "')").count() > 0;
+    }
+
+    /** Save (Save and display -> the activity view). */
+    public void save() {
+        Locator save = page.locator("#id_submitbutton");
+        (save.count() > 0 ? save : page.locator("#id_submitbutton2")).first().click();
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+        page.waitForTimeout(2_000);
+    }
+
+    /** After save, the form redirects away (to the activity view / course). */
+    public boolean savedOk() {
+        return page.url().contains("view.php") || page.url().contains("/course/view");
+    }
+
+    public boolean tagPersisted(int cmid, String tag) {
+        openEdit(cmid);
+        expandTags();
+        return chipPresent(tag);
+    }
+}

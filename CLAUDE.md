@@ -43,9 +43,20 @@ reconciling against the other sheets (causes both misses AND duplicates).
 Running, Delete → removed), NOT merely that a control exists. Always exercise the interaction and
 assert the outcome (see "Exercise the action, don't just assert presence").
 
-**Augmented (gap-fill) cases:** add to the xlsx as new rows — id `CGAP-<AREA>-<n>` in the Name column,
-Comment `Claude gap-analysis (date)`, S.No continues numerically. **Back up the xlsx first**
-(`_BACKUP_<date>.xlsx`). Automate them tagged so traceability distinguishes original vs augmented.
+**Augmented (gap-fill) cases:** add to the xlsx as new rows — id `CGAP-<AREA>-<n>` in the S.No column,
+Comment `Automation gap (derived ...) <date>`, other rows continue after the originals. **Back up the
+xlsx first** (`.backup-<date>.xlsx`), use a duplicate-guard, and touch ONLY that sheet. Automate them
+tagged (`@CGAP-<AREA>-<n>`) so traceability distinguishes original vs augmented.
+
+**Per-sheet workflow — DO IN THIS ORDER. Gap analysis + writing CGAP rows into the sheet is a GATE
+that comes BEFORE any automation scripting:**
+1. Read ALL manual cases in the sheet.
+2. Inventory the control surface (templates/pages) + state machine + roles/inputs/boundary matrices.
+3. Derive gaps and **append `CGAP-<AREA>-<n>` rows into that sheet** (back up; duplicate-guard;
+   confirm before writing to the shared workbook — it is the team's source of truth).
+4. ONLY THEN write feature files / step definitions and automate.
+Scripting before the derived gaps are captured in the sheet is out of order — the sheet must reflect
+the full derived coverage first.
 
 ## Scope & sequencing (STANDING — apply by default; see TODO.md for deferred work)
 - **Priority:** respect the case `Importance` column. Automate **High then Medium** first;
