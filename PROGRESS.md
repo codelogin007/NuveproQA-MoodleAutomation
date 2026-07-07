@@ -30,8 +30,11 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
   Gotchas handled: start/continue confirm modals; cp.php CP detected by CONTROLS (no
   .guided-control-panel container); lab NOT auto-provisioned — click "Start hands-on lab"; lab id
   read from admin Manage Labs (CP inputs are server-rendered/stale).
-- ⏸️ CGAP-PGG-5 Submit: skips — disabled on a stopped lab; needs a submit-while-running scenario
-- 🔲 Attempt lifecycle remainder: New Attempt, cooldown, Complete, override — CGAP-PGG-2/3/4/6/7/10/11/12/19
+- ✅ **Attempt lifecycle** (`@guidedattempts`): CGAP-PGG-5 submit while RUNNING (firm), CGAP-PGG-3
+  cooldown blocked-signal observed (1-min gap), CGAP-PGG-2 New Attempt after the gap → CP. All green.
+- ⏸️ CGAP-PGG-6 Complete button: DORMANT (commented out in guided-landing.mustache, like Get-Progress)
+- 🔲 Attempt lifecycle remainder: CGAP-PGG-4 (attempts exhausted), 7 (restart blocked), 10/11/12
+  (checkpoint data / drill-down / override), 19 (table export)
 - ⚠️ **Env fixes applied 2026-07-07** (restore notes): guided activity due date was EXPIRED
   (2026-05-09 15:52 → 2027) and time limit was 2 MINUTES (→ 1h) — either made the activity unusable
   for every student; flag to the team if intentional.

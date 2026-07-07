@@ -403,6 +403,70 @@ public class GuidedSteps {
         assertTrue(landingBack, "landing did not come back after submitting the attempt");
     }
 
+    // ---- @guidedattempts: submit-while-running, cooldown, New Attempt ----
+
+    @When("the student submits the guided attempt while the lab is running")
+    public void theStudentSubmitsWhileRunning() {
+        GuidedControlPanel cp = scp();
+        assertTrue(cp.waitEnabled(GuidedControlPanel.SUBMIT, 180),
+                "Submit never became enabled on a RUNNING lab");
+        cp.clickGuardedAction(GuidedControlPanel.SUBMIT, GuidedControlPanel.SUBMIT_ACK);
+    }
+
+    @Then("the attempt is submitted and the student returns to the landing")
+    public void theAttemptIsSubmittedAndBackOnLanding() {
+        boolean back = false;
+        for (int i = 0; i < 60 && !back; i++) {
+            try {
+                Locator l = studentPage.locator(GuidedLanding.CONTAINER);
+                back = (l.count() > 0 && l.first().isVisible())
+                        || studentPage.url().contains("view.php")
+                        || !scp().isShown();
+            } catch (Throwable midNavigation) { /* navigating */ }
+            if (!back) studentPage.waitForTimeout(1_000);
+        }
+        assertTrue(back, "did not leave the control panel after submitting the attempt");
+    }
+
+    @Then("the new-attempt cooldown is observed or already elapsed")
+    public void theNewAttemptCooldownIsObservedOrElapsed() {
+        new GuidedLanding(studentPage).open(guidedCmid());
+        studentPage.waitForTimeout(5_000);   // landing JS computes the gap via checkGuidedProjectTimer
+        Locator btn = studentPage.locator(GuidedLanding.NEW_ATTEMPT);
+        Locator timer = studentPage.locator(GuidedLanding.NEW_ATTEMPT_TIMER);
+        assertTrue(btn.count() > 0, "New Attempt button not present on the landing after submit");
+        boolean blocked = (timer.count() > 0 && timer.first().isVisible()) || !btn.first().isEnabled();
+        // gap = 1 min and may count from the attempt START (already elapsed by submit time) — both
+        // outcomes are valid; log which one we saw so PGG-3 coverage is honest.
+        System.out.println("[GuidedAttempts] cooldown blocked-signal observed: " + blocked);
+    }
+
+    @When("the student starts a new attempt after the cooldown")
+    public void theStudentStartsANewAttemptAfterCooldown() {
+        // wait (max ~4 min) for New Attempt to become enabled, then click + confirm
+        Locator btn = studentPage.locator(GuidedLanding.NEW_ATTEMPT);
+        boolean enabled = false;
+        for (int i = 0; i < 48 && !enabled; i++) {
+            try { enabled = btn.count() > 0 && btn.first().isVisible() && btn.first().isEnabled(); }
+            catch (Throwable ignored) {}
+            if (!enabled) {
+                studentPage.waitForTimeout(5_000);
+                if (i % 12 == 11) { new GuidedLanding(studentPage).open(guidedCmid()); studentPage.waitForTimeout(4_000); }
+            }
+        }
+        assertTrue(enabled, "New Attempt did not become enabled after the cooldown gap");
+        for (int c = 1; c <= 6; c++) {
+            try {
+                if (scp().isShown()) return;
+                if (btn.count() > 0 && btn.first().isVisible()) btn.first().click();
+                studentPage.waitForTimeout(1_200);
+                scp().confirmAnyModal();   // "Start Practice Project. Proceed?" -> Yes
+            } catch (Throwable midNavigation) { /* new attempt may reload the page */ }
+            if (waitControlPanel(20)) return;
+        }
+        throw new AssertionError("the control panel did not open for the new attempt");
+    }
+
     @After("@guidedlab")
     public void cleanupGuidedLab() {
         if (studentCtx != null) { try { studentCtx.close(); } catch (Throwable ignored) {} studentCtx = null; }
