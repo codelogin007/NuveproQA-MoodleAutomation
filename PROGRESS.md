@@ -20,10 +20,13 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 - ⏸️ Config-gated: PG-31, 50, 54, 55 (fault-injection / expired / unlimited templates)
 - ⏸️ CGAP-PG-* gap cases (Playground_Coverage_Matrix.md §E)
 
-## Guided (practice project)  — tag `@guided`
+## Guided (practice project)  — tags `@guided` + `@guidedgaps`
 - ✅ Landing + admin + config presence: PGG-4, 5, 6, 9, 10, 12, 2, 3
+- ✅ **Derived gaps, no-provisioning** (`@guidedgaps`): CGAP-PGG-13/14 (student sees no admin buttons;
+  admin participants page blocked for student — capability ENFORCEMENT), CGAP-PGG-15 (due-before-start
+  rejected), CGAP-PGG-16/17 (progress-tracking + content-source config toggles)
 - 🔲 Lab-action cases: G14 (control panel), G15 (start→running), G16/G17 (stop→landing) — need fresh-lab provisioning
-- 🔲 Attempt lifecycle (gap): Continue, New Attempt, cooldown, Submit, Complete, override — CGAP-PGG-1..19
+- 🔲 Attempt lifecycle (gap): Continue, New Attempt, cooldown, Submit, Complete, override — CGAP-PGG-1..12/18/19
 - 🔲 Admin: Checkpoint Details modal, User Attempts drill-down, report email
 - ⏸️ **Blocked:** G18, G19, G21 (Get-Progress button is DORMANT/commented out — needs product confirmation)
 - ⏸️ Deferred (time/cron/data): G20 (cron), G22 (auto-complete), G23/G24 (restart timing), G11/G13/G26 (checkpoint data)
