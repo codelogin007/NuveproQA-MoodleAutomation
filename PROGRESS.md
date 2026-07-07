@@ -91,6 +91,21 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 - ⏸️ Duration/time-based (G26/G30-G33/G43)
 - ✅ Gap rows CGAP-GR-1..11 in the Groups_Testcases sheet
 
+## Assessment (challenge)  — tag `@assessgaps` (Kiwi sheet: 327 cases, 107 High)
+- ✅ **Batch 1 (no provisioning)**: landing presence (attempt controls/details on ASSESSMENT_CMID=781,
+  course 50); CGAP-A-1..4 config toggles (evaluationtype AUTO/ANSWER/MANUAL fields, randomization
+  hides editor, content-source git URL, cooldown→attempts-after with polling); CGAP-A-5/6/7 edit-form
+  validations (due-before-start, missing gradepass, invalid testscriptparams JSON — validation failure
+  saves nothing); CGAP-A-8 student blocked from managechallenges.php + no admin controls on landing.
+- 🔴 **DEFECT found (CGAP-A-8 / `@assessdeviation`, fails by design until fixed)**: a STUDENT can open
+  `assessment-problemstatements.php` by direct URL — the admin table renders (the landing button is
+  hidden per A249, but the page lacks a capability check; managechallenges.php IS protected).
+- 🔲 Batch 2 (provisioned): start→CP→submit(→Evaluating)→complete (consent-checkbox gate CGAP-A-9),
+  admin manage-challenge row; lab via CloudLabs API
+- 🔲 Batch 3: problem-statements admin CRUD (A249/250/255/257/259), overrides, user-attempts drill-down
+- ⏸️ Per-testcase marks (A65-96 — needs real lab work), cron clusters (A99/185-188/206-214), proctoring
+- ✅ Matrix: ../Docs/Assessment_Coverage_Matrix.md · CGAP-A-1..12 in the Kiwi sheet (A-10 deduped)
+
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Assessment (challenge) — largest sheet (~145+); cloudlabs provisioning
 - 🔲 Reports (46 — cloudlabs report), Activities (48), All Course Page (44)
