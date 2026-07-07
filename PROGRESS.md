@@ -25,8 +25,16 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 - ✅ **Derived gaps, no-provisioning** (`@guidedgaps`): CGAP-PGG-13/14 (student sees no admin buttons;
   admin participants page blocked for student — capability ENFORCEMENT), CGAP-PGG-15 (due-before-start
   rejected), CGAP-PGG-16/17 (progress-tracking + content-source config toggles)
-- 🔲 Lab-action cases: G14 (control panel), G15 (start→running), G16/G17 (stop→landing) — need fresh-lab provisioning
-- 🔲 Attempt lifecycle (gap): Continue, New Attempt, cooldown, Submit, Complete, override — CGAP-PGG-1..12/18/19
+- ✅ **Lab lifecycle** (`@guidedlab`, one provisioned lab): G14 control panel, G15/CGAP-PGG-8
+  start→RUNNING (API), G16/G17/CGAP-PGG-9 stop→STOPPED + back to landing, CGAP-PGG-1 Continue.
+  Gotchas handled: start/continue confirm modals; cp.php CP detected by CONTROLS (no
+  .guided-control-panel container); lab NOT auto-provisioned — click "Start hands-on lab"; lab id
+  read from admin Manage Labs (CP inputs are server-rendered/stale).
+- ⏸️ CGAP-PGG-5 Submit: skips — disabled on a stopped lab; needs a submit-while-running scenario
+- 🔲 Attempt lifecycle remainder: New Attempt, cooldown, Complete, override — CGAP-PGG-2/3/4/6/7/10/11/12/19
+- ⚠️ **Env fixes applied 2026-07-07** (restore notes): guided activity due date was EXPIRED
+  (2026-05-09 15:52 → 2027) and time limit was 2 MINUTES (→ 1h) — either made the activity unusable
+  for every student; flag to the team if intentional.
 - 🔲 Admin: Checkpoint Details modal, User Attempts drill-down, report email
 - ⏸️ **Blocked:** G18, G19, G21 (Get-Progress button is DORMANT/commented out — needs product confirmation)
 - ⏸️ Deferred (time/cron/data): G20 (cron), G22 (auto-complete), G23/G24 (restart timing), G11/G13/G26 (checkpoint data)

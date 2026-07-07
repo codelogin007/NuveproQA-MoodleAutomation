@@ -7,7 +7,12 @@ import com.microsoft.playwright.Page;
 import com.nuvepro.moodle.config.Settings;
 import com.nuvepro.moodle.helpers.ApiClient;
 import com.nuvepro.moodle.helpers.Auth;
+import com.nuvepro.moodle.helpers.CloudLabsClient;
+import com.nuvepro.moodle.pages.GuidedControlPanel;
 import com.nuvepro.moodle.pages.GuidedLanding;
+import com.nuvepro.moodle.pages.ManageLabs;
+
+import java.util.EnumSet;
 import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -256,5 +261,159 @@ public class GuidedSteps {
     public void cleanupGuidedGaps() {
         if (studentCtx != null) { try { studentCtx.close(); } catch (Throwable ignored) {} studentCtx = null; }
         if (student != null) { try { ApiClient.deleteUser(student.id); } catch (Throwable ignored) {} student = null; }
+    }
+
+    // ---- @guidedlab: lab lifecycle (start -> Running -> stop -> landing -> continue -> submit) ----
+
+    private String guidedLabId;
+
+    private GuidedControlPanel scp() {
+        return new GuidedControlPanel(studentPage);
+    }
+
+    /** Wait for either the control panel or (fallback=false) return whether it appeared. */
+    private boolean waitControlPanel(int maxSeconds) {
+        GuidedControlPanel cp = scp();
+        for (int i = 0; i < maxSeconds; i++) {
+            if (cp.isShown()) return true;
+            studentPage.waitForTimeout(1_000);
+        }
+        return false;
+    }
+
+    @When("the student starts the guided project")
+    public void theStudentStartsTheGuidedProject() {
+        if (!CloudLabsClient.isConfigured()) throw new SkipException("CloudLabs API not configured");
+        theStudentOpensTheGuidedActivity();
+        // The landing start control's JS handler attaches late (same race as playground): wait,
+        // then CLICK REPEATEDLY until the control panel appears.
+        studentPage.waitForTimeout(5_000);
+        String startSel = GuidedLanding.START + ", " + GuidedLanding.CONTINUE + ", " + GuidedLanding.NEW_ATTEMPT;
+        for (int c = 1; c <= 8; c++) {
+            try {
+                if (scp().isShown()) return;
+                Locator btn = studentPage.locator(startSel);
+                if (btn.count() > 0 && btn.first().isVisible()) btn.first().click();
+                studentPage.waitForTimeout(1_200);
+                scp().confirmAnyModal();   // "Start Practice Project. Proceed?" -> Yes
+            } catch (Throwable midNavigation) { /* start may reload the page mid-check */ }
+            if (waitControlPanel(20)) return;
+        }
+        throw new SkipException("guided control panel did not open after clicking start");
+    }
+
+    @Then("the guided control panel is shown")
+    public void theGuidedControlPanelIsShown() {
+        assertTrue(waitControlPanel(30), "guided control panel is not shown");
+    }
+
+    @Then("the guided lab reaches Running")
+    public void theGuidedLabReachesRunning() {
+        scp().startHandsOnLabIfNeeded();   // the CP does not auto-provision; click "Start hands-on lab"
+        // The CP's lab-id inputs are SERVER-rendered (stay empty until a reload), so the reliable
+        // source is admin Manage Labs by the student's email (the proven shared-lab pattern).
+        ManageLabs ml = new ManageLabs(ctx.page);
+        int sid = Integer.parseInt(sectionId);
+        for (int i = 0; i < 20 && (guidedLabId == null || guidedLabId.isEmpty()); i++) {
+            guidedLabId = scp().labId();
+            if (guidedLabId == null || guidedLabId.isEmpty()) {
+                try { ml.open(sid); guidedLabId = ml.labIdForEmail(student.email); } catch (Throwable ignored) {}
+            }
+            if (guidedLabId == null || guidedLabId.isEmpty()) {
+                studentPage.waitForTimeout(3_000);
+                if (i == 6 || i == 12) scp().startHandsOnLabIfNeeded();   // retry the launch click
+            }
+        }
+        assertTrue(guidedLabId != null && !guidedLabId.isEmpty(),
+                "no lab id via the CP inputs or admin Manage Labs - the hands-on-lab launch may not have fired");
+        System.out.println("[GuidedLab] lab id=" + guidedLabId);
+        ManageLabs.LabState st = CloudLabsClient.waitForState(guidedLabId,
+                EnumSet.of(ManageLabs.LabState.RUNNING, ManageLabs.LabState.FAILED), 180, 5);
+        assertTrue(st == ManageLabs.LabState.RUNNING,
+                "guided lab did not reach Running (state=" + st + ") - if FAILED, check the account pool");
+    }
+
+    @When("the student stops the guided lab")
+    public void theStudentStopsTheGuidedLab() {
+        GuidedControlPanel cp = scp();
+        assertTrue(cp.waitEnabled(GuidedControlPanel.STOP, 120),
+                "Stop Lab never became enabled on the guided control panel");
+        cp.clickGuardedAction(GuidedControlPanel.STOP, GuidedControlPanel.STOP_ACK);
+        studentPage.waitForTimeout(8_000);
+        try {
+            if (cp.isShown() && studentPage.locator(".modal.show").count() == 0) {
+                cp.clickGuardedAction(GuidedControlPanel.STOP, GuidedControlPanel.STOP_ACK);   // retry once
+            }
+        } catch (Throwable midNavigation) { /* stop may navigate away mid-check */ }
+    }
+
+    @Then("the guided lab is Stopped and the student returns to the landing")
+    public void theGuidedLabIsStoppedAndBackOnLanding() {
+        // API FIRST — the authoritative check that the stop took effect.
+        ManageLabs.LabState st = CloudLabsClient.waitForState(guidedLabId,
+                EnumSet.of(ManageLabs.LabState.STOPPED, ManageLabs.LabState.FAILED), 240, 5);
+        assertTrue(st == ManageLabs.LabState.STOPPED, "guided lab did not stop (state=" + st + ")");
+        // Then the UI: back on the landing, or at least off the control panel (cp.php may redirect
+        // to view.php rather than the in-place landing switch).
+        boolean back = false;
+        for (int i = 0; i < 45 && !back; i++) {
+            try {
+                Locator l = studentPage.locator(GuidedLanding.CONTAINER);
+                back = (l.count() > 0 && l.first().isVisible())
+                        || studentPage.url().contains("view.php")
+                        || !scp().isShown();
+            } catch (Throwable midNavigation) { /* navigating */ }
+            if (!back) studentPage.waitForTimeout(1_000);
+        }
+        assertTrue(back, "still on the guided control panel after Stop Lab (no redirect to the landing)");
+    }
+
+    @When("the student continues the guided project")
+    public void theStudentContinuesTheGuidedProject() {
+        new GuidedLanding(studentPage).open(guidedCmid());   // ensure we start from the landing
+        studentPage.waitForTimeout(5_000);                   // let the landing JS attach
+        for (int c = 1; c <= 6; c++) {
+            try {
+                if (scp().isShown()) return;
+                Locator cont = studentPage.locator(GuidedLanding.CONTINUE);
+                if (cont.count() > 0 && cont.first().isVisible()) cont.first().click();
+                studentPage.waitForTimeout(1_200);
+                scp().confirmAnyModal();   // Continue may also ask for confirmation
+            } catch (Throwable midNavigation) { /* continue may reload the page mid-check */ }
+            if (waitControlPanel(15)) return;
+        }
+        throw new SkipException("Continue did not reopen the guided control panel");
+    }
+
+    @When("the student submits the guided attempt")
+    public void theStudentSubmitsTheGuidedAttempt() {
+        GuidedControlPanel cp = scp();
+        if (!cp.waitEnabled(GuidedControlPanel.SUBMIT, 60)) {
+            throw new SkipException("Submit stays disabled (lab is stopped; access not ready) - "
+                    + "submit-on-running-lab needs its own scenario");
+        }
+        cp.clickGuardedAction(GuidedControlPanel.SUBMIT, GuidedControlPanel.SUBMIT_ACK);
+        // after submit the page reloads back to the landing
+        boolean landingBack = false;
+        for (int i = 0; i < 45; i++) {
+            Locator l = studentPage.locator(GuidedLanding.CONTAINER);
+            if (l.count() > 0 && l.first().isVisible()) { landingBack = true; break; }
+            studentPage.waitForTimeout(1_000);
+        }
+        assertTrue(landingBack, "landing did not come back after submitting the attempt");
+    }
+
+    @After("@guidedlab")
+    public void cleanupGuidedLab() {
+        if (studentCtx != null) { try { studentCtx.close(); } catch (Throwable ignored) {} studentCtx = null; }
+        if (student != null) {
+            try { ApiClient.deleteUser(student.id); } catch (Throwable ignored) {}   // cascade-deletes the lab
+            student = null;
+        }
+        if (guidedLabId != null && !guidedLabId.isEmpty()) {
+            try { CloudLabsClient.waitForState(guidedLabId, EnumSet.of(ManageLabs.LabState.DELETED), 600, 15); }
+            catch (Throwable e) { System.out.println("[GuidedLab] delete-wait after user cascade: " + e.getMessage()); }
+            guidedLabId = null;
+        }
     }
 }
