@@ -100,9 +100,16 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 - 🔴 **DEFECT found (CGAP-A-8 / `@assessdeviation`, fails by design until fixed)**: a STUDENT can open
   `assessment-problemstatements.php` by direct URL — the admin table renders (the landing button is
   hidden per A249, but the page lacks a capability check; managechallenges.php IS protected).
-- 🔲 Batch 2 (provisioned): start→CP→submit(→Evaluating)→complete (consent-checkbox gate CGAP-A-9),
-  admin manage-challenge row; lab via CloudLabs API
-- 🔲 Batch 3: problem-statements admin CRUD (A249/250/255/257/259), overrides, user-attempts drill-down
+- ✅ **Batch 2 (provisioned + REAL evaluation)** (`@assesslab` + `@assesscomplete`): start → control
+  panel → lab RUNNING (API) → submit → the engine runs the configured S3-Life-Cycle scripts → attempt
+  Evaluated (fresh student = grade 0 / Fail, EXPECTED). Then the activity AUTO-COMPLETES
+  (isChallengeEnded=1, finalResult=Fail — also covers A127); CGAP-A-9 consent gate verified wired
+  (final submit disabled → enables on ticking #confirmFinalSubmission). All green.
+  Gotchas: challenge-landing.mustache is the ACTIVE template (not assessment-landing); complete button
+  is `.np-ap-cl-challenge-end` (auto-hides once ended); "Start hands-on lab" launch needed; lab id from
+  admin Manage Labs. ASSESSMENT_SCRIPT_URL/LAB_TEMPLATE documented in .env.example (plan 777/team 90).
+- 🔲 Batch 3: problem-statements admin CRUD (A249/250/255/257/259), overrides, user-attempts drill-down,
+  retake-after-completion, admin manage-challenge table
 - ⏸️ Per-testcase marks (A65-96 — needs real lab work), cron clusters (A99/185-188/206-214), proctoring
 - ✅ Matrix: ../Docs/Assessment_Coverage_Matrix.md · CGAP-A-1..12 in the Kiwi sheet (A-10 deduped)
 
