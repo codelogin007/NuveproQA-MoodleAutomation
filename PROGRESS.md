@@ -2,7 +2,7 @@
 
 Living status of what's **automated (green)**, **open (to do)**, and **deferred (with reason)**, by
 module. Update as batches complete. Legend: ✅ done · 🔲 open · ⏸️ deferred/blocked.
-Last updated: 2026-07-06.
+Last updated: 2026-07-08.
 
 Repo: https://github.com/codelogin007/NuveproQA-MoodleAutomation (branch `main`).
 Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
@@ -121,14 +121,18 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 - ✅ Matrix: ../Docs/Assessment_Coverage_Matrix.md · CGAP-A-1..12 in the Kiwi sheet (A-10 deduped)
 
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
-- 🔲 Assessment (challenge) — largest sheet (~145+); cloudlabs provisioning
-- 🔲 Reports (46 — cloudlabs report), Activities (48), All Course Page (44)
+- 🔲 Reports (Kiwi: 203 — cloudlabs report), Activities (68), All Course Page (107)
 - 🔲 Settings, cron, Logs, Lab_Templates, LTI & SSO, Cloudlabs Integration, LoadBalancer
-- (Roles + Groups: first batches done — see their sections above; remainder open there)
+- 🔲 New Kiwi feature sheets: AWS_Marketplace, Randomization_Activity, Practice_Project, Sandbox,
+  Lab_Control_Panel, My_Labs, etc. (many overlap Playground/Guided/Assessment already covered)
+- (Assessment: batches 1-3 done — see its section; Roles + Groups: first batches done — remainder open there)
 
 ## Gap rows written into the xlsx (derived, `CGAP-*`)
-- ✅ `Moodle_users`: CGAP-U-1..12 · `Moodle_Tags`: CGAP-T-1..11 · `Moodle_Roles`: CGAP-R-1..12 · `Groups_Testcases`: CGAP-GR-1..11
-- 🔲 Playground/Guided gaps live in the matrix `.md` docs — not yet appended to their sheets
+- ✅ Old master `MoodleRegression_Testing.xlsx`: `Moodle_users` CGAP-U-1..12 · `Moodle_Tags` CGAP-T-1..11 ·
+  `Moodle_Roles` CGAP-R-1..12 · `Groups_Testcases` CGAP-GR-1..11
+- ✅ **New master `MoodleRegression_Testing_Kiwi.xlsx`** (team's updated doc): all of the above PLUS
+  37 Playground gap rows, `Moodle_Guided_Labs` CGAP-PGG (19), `Moodle_Assessment_Labs` CGAP-A-1..12 —
+  102 rows merged, Case_Status=PROPOSED, deduped, backed up. Matrices in ../Docs/*_Coverage_Matrix.md.
 
 ## Infra / cross-cutting
 - ✅ Fresh-user lab + CloudLabs API polling (extend/expire) — the standard lab method
