@@ -33,11 +33,12 @@ the original and adds many feature areas not yet started (listed below).
 | AWS_Marketplace (local_nuveawsmarketplace, 36) | 4 green + 1 defect red | ~6 / 36 | CGAP-AWS (3) | subscriptions flow, save valid config (mutates), multi-region |
 | Content_Integration_Git_URL (24) | 1 green | ~3 / 24 | CGAP-CIG (2) | git-fetch valid/invalid, all-three-lab-types matrix |
 | Difficulty_Level_Configuration (14) | 2 green | ~3 / 14 | CGAP-DLC (3) | empty-save handling, config→activity flow |
-| **Subtotal (worked sheets)** | **~123 green scenarios** | **~193 / ~857 doc cases** | 128 gap rows | — |
+| Randomization_Activity (mod_randomactivity, 68) | 4 green | ~5 / 68 | CGAP-RAND (3) | dynamic-display/completion behavior, grades, view/index |
+| **Subtotal (worked sheets)** | **~127 green scenarios** | **~198 / ~925 doc cases** | 131 gap rows | — |
 
 ### Not started — 0 covered (the rest of the current master, ~1,375 cases across 27 sheets)
 Reports 202 · Practice_Project 141 · All Course Page 106 · Lab_Templates 82 ·
-Moodle settings 79 · Randomization_Activity 68 · Activities 67 ·
+Moodle settings 79 · Activities 67 ·
 Moodle_Logs 50 · CloudLabs_Lab_Creation_Status 49 · My_Labs 41 ·
 Lab_Control_Panel 34 · Course_Sync_Multi_Tenant 33 · User_Sync_Orgo 31 · Raven360_AWS_Content 29 ·
 Lab_Creation_Region_Based 23 · Moodle_cron 17 ·
@@ -202,6 +203,13 @@ open — student can open the problem-statements admin page) · guided cmid 780 
   levels + Beginner default); admin "Difficulty Level Settings" (`cloudlabs/difficulty_levels`) on
   Cloud Server Settings. ⚠️ Spec discrepancy: documented levels Beginner/Practitioner/Proficient/Expert
   vs actual Beginner/Intermediate/Advanced/Expert (admin-configurable). 🔲 empty-save handling.
+
+## Randomization Activity  — tag `@randomactivity` (plugin `mod_randomactivity`; Kiwi sheet 68)
+- ✅ **Batch 1**: add form shows name/dynamicdisplay/duedate/completiontrack; name accepts
+  alphanumeric+special; name required (empty blocked); create a randomization activity → appears in
+  course → deleted via UI in `@After` (WS token lacks core_course_delete_modules). All green.
+- 🔲 Batch 2: dynamic-display behavior, completion tracking, grades (grade.php/gradeslist.php),
+  view/index rendering, activity randomization logic
 
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Reports (Kiwi: 203 — cloudlabs report), Activities (68), All Course Page (107)
