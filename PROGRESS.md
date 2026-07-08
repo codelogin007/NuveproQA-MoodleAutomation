@@ -9,6 +9,28 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 
 ---
 
+## Coverage at a glance
+"Automated scenarios" = green Cucumber scenarios in the feature files (a Scenario Outline counts its
+data rows). "Manual cases mapped" = how many of that module's source test-doc cases are directly
+exercised (approx; excludes derived `CGAP-*` gap cases, counted separately). Counts are the automated
+backbone — many source cases are combinatorial variations of a covered mechanic.
+
+| Module | Automated scenarios | Manual cases mapped (approx) | Derived gaps (CGAP) | Deferred (reason) |
+|---|---|---|---|---|
+| Playground | ~24 green | ~30 PG | CGAP-PG in matrix | template variants, config-gated, value-checks |
+| Guided | 13 | ~12 PGG/G | CGAP-PGG 1-3,5,8,9,13-17 | Complete btn dormant; overrides/checkpoint; cron |
+| Moodle_users | 25 | ~24 U | CGAP-U 1,2,6,7,8 | report-builder list, bulk import, config/mail cases |
+| Tags | 29 | ~29 T | CGAP-T (partial) | Orgo/report tags, config-gated |
+| Roles | 10 (matrix = 5 roles × 12 caps ≈ 56 cases) | ~60 R | CGAP-R defined | enforcement gaps, broad functional |
+| Groups | 11 | ~10 G | CGAP-GR defined | cohort-sync enrolment, reports, time-based |
+| Assessment | 16 (15 green + 1 defect red) | ~10 A | CGAP-A 1-9 | PS-CRUD (no PS on 781), per-testcase marks, cron, proctoring |
+| **Total** | **~108 green scenarios** | — | — | — |
+
+Findings raised: Roles permissions defect (fixed+verified) · Assessment CGAP-A-8 (`@assessdeviation`,
+open — student can open the problem-statements admin page) · guided cmid 780 env fixes (due date/timelimit).
+
+---
+
 ## Playground (cloudlabs sandbox lab)  — tag `@provisioning` groups
 - ✅ **State actions** (`@stateactions`): PG-12, 15, 17, 18, 19, 33, 34, 35, 38, 49
 - ✅ **Console read-only** (`@console`): PG-3, 5, 6, 8 · PG-45 template-gated skip
