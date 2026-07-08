@@ -28,11 +28,12 @@ the original and adds many feature areas not yet started (listed below).
 | Roles (Moodle_Roles 90) | 10 (matrix ≈ 56 cases) | ~56 / 90 | CGAP-R (12) | enforcement gaps, broad functional |
 | Groups (Groups_Testcases 48) | 11 | ~10 / 48 | CGAP-GR (11) | cohort-sync enrolment, reports, time-based |
 | Assessment (Moodle_Assessment_Labs 327) | 16 (15 green + 1 defect red) | ~10 / 327 | CGAP-A (11) | PS-CRUD, per-testcase marks, cron, proctoring, hide-grades |
-| **Subtotal (worked sheets)** | **~108 green scenarios** | **~172 / ~601 doc cases** | 113 gap rows | — |
+| Pre-Delivery (Pre_Delivery_Lab_Checklist 72) | 4 green | ~4 / 72 | CGAP-PDL (4) | successful save+audit log, screenshot upload, dashboard filters |
+| **Subtotal (worked sheets)** | **~112 green scenarios** | **~176 / ~673 doc cases** | 117 gap rows | — |
 
 ### Not started — 0 covered (the rest of the current master, ~1,375 cases across 27 sheets)
 Reports 202 · Practice_Project 141 · NuveBulkMail 110 · All Course Page 106 · Lab_Templates 82 ·
-Moodle settings 79 · Pre_Delivery_Lab_Checklist 72 · Randomization_Activity 68 · Activities 67 ·
+Moodle settings 79 · Randomization_Activity 68 · Activities 67 ·
 Moodle_Logs 50 · CloudLabs_Lab_Creation_Status 49 · My_Labs 41 · AWS_Marketplace_Integration 36 ·
 Lab_Control_Panel 34 · Course_Sync_Multi_Tenant 33 · User_Sync_Orgo 31 · Raven360_AWS_Content 29 ·
 Content_Integration_Git_URL 24 · Lab_Creation_Region_Based 23 · Moodle_cron 17 ·
@@ -162,6 +163,15 @@ open — student can open the problem-statements admin page) · guided cmid 780 
   (A115), console-open (A125) - need attempt data / provisioning
 - ⏸️ Per-testcase marks (A65-96 — needs real lab work), cron clusters (A99/185-188/206-214), proctoring
 - ✅ Matrix: ../Docs/Assessment_Coverage_Matrix.md · CGAP-A-1..12 in the Kiwi sheet (A-10 deduped)
+
+## Pre-Delivery Lab Readiness Checklist  — tag `@predelivery` (Kiwi: Pre_Delivery_Lab_Checklist, 72)
+- ✅ **Batch 1 (no provisioning)**: Lab Readiness page (`lab_readiness.php?id=cmid`) admin-only (cap
+  `mod/cloudlabs:viewlabreadiness`; student blocked); checklist `.checklist-item` completion drives
+  `#labProgressBar` to 100% + green `bg-success`; env-type VM/Account toggles `.vm-field`/`.account-field`;
+  mandatory Support-Engineer name (empty → `alert()` → save blocked, nothing persists). All green.
+- 🔲 Batch 2: readiness dashboard filters/search (activity/project/support-engineer), successful save +
+  audit-log row, screenshot upload + re-upload override, backend-warning banner, force-enable flagging
+- ✅ Matrix ../Docs/PreDelivery_LabReadiness_Coverage_Matrix.md · CGAP-PDL-1..4 (pending Kiwi write — file was open)
 
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Reports (Kiwi: 203 — cloudlabs report), Activities (68), All Course Page (107)
