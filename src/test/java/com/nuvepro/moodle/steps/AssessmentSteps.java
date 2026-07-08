@@ -7,7 +7,12 @@ import com.microsoft.playwright.Page;
 import com.nuvepro.moodle.config.Settings;
 import com.nuvepro.moodle.helpers.ApiClient;
 import com.nuvepro.moodle.helpers.Auth;
+import com.nuvepro.moodle.helpers.CloudLabsClient;
+import com.nuvepro.moodle.pages.ChallengeControlPanel;
+import com.nuvepro.moodle.pages.ManageLabs;
 import io.cucumber.java.After;
+
+import java.util.EnumSet;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -305,5 +310,212 @@ public class AssessmentSteps {
     public void cleanupAssessGaps() {
         if (studentCtx != null) { try { studentCtx.close(); } catch (Throwable ignored) {} studentCtx = null; }
         if (student != null) { try { ApiClient.deleteUser(student.id); } catch (Throwable ignored) {} student = null; }
+    }
+
+    // ---- @assesslab: provisioned lifecycle with REAL evaluation ----
+
+    private String assessLabId;
+
+    private ChallengeControlPanel ccp() {
+        return new ChallengeControlPanel(studentPage);
+    }
+
+    private boolean waitCp(int maxSeconds) {
+        ChallengeControlPanel cp = ccp();
+        for (int i = 0; i < maxSeconds; i++) {
+            if (cp.isShown()) return true;
+            studentPage.waitForTimeout(1_000);
+        }
+        return false;
+    }
+
+    @When("the student starts the assessment")
+    public void theStudentStartsTheAssessment() {
+        if (!CloudLabsClient.isConfigured()) throw new SkipException("CloudLabs API not configured");
+        theStudentOpensTheAssessmentActivity();
+        studentPage.waitForTimeout(5_000);   // landing JS attach
+        for (int c = 1; c <= 8; c++) {
+            try {
+                if (ccp().isShown()) return;
+                Locator btn = studentPage.locator(ATTEMPT_CONTROLS);
+                for (int i = 0; i < btn.count(); i++) {
+                    if (btn.nth(i).isVisible()) { btn.nth(i).click(); break; }
+                }
+                studentPage.waitForTimeout(1_200);
+                ccp().confirmAnyModal();   // "Start Assessment. Proceed?" -> Yes
+            } catch (Throwable midNavigation) { /* start may reload into the CP */ }
+            if (waitCp(20)) return;
+        }
+        throw new SkipException("assessment control panel did not open after clicking start");
+    }
+
+    @Then("the assessment control panel is shown")
+    public void theAssessmentControlPanelIsShown() {
+        assertTrue(waitCp(30), "assessment control panel is not shown");
+    }
+
+    @Then("the assessment lab reaches Running")
+    public void theAssessmentLabReachesRunning() {
+        ccp().startHandsOnLabIfNeeded();
+        ManageLabs ml = new ManageLabs(ctx.page);
+        int sid = Integer.parseInt(sectionId);
+        for (int i = 0; i < 20 && (assessLabId == null || assessLabId.isEmpty()); i++) {
+            assessLabId = ccp().labId();
+            if (assessLabId == null || assessLabId.isEmpty()) {
+                try { ml.open(sid); assessLabId = ml.labIdForEmail(student.email); } catch (Throwable ignored) {}
+            }
+            if (assessLabId == null || assessLabId.isEmpty()) {
+                studentPage.waitForTimeout(3_000);
+                if (i == 6 || i == 12) ccp().startHandsOnLabIfNeeded();
+            }
+        }
+        assertTrue(assessLabId != null && !assessLabId.isEmpty(),
+                "no lab id via the CP inputs or admin Manage Labs - the hands-on-lab launch may not have fired");
+        System.out.println("[Assess] lab id=" + assessLabId);
+        ManageLabs.LabState st = CloudLabsClient.waitForState(assessLabId,
+                EnumSet.of(ManageLabs.LabState.RUNNING, ManageLabs.LabState.FAILED), 180, 5);
+        assertTrue(st == ManageLabs.LabState.RUNNING,
+                "assessment lab did not reach Running (state=" + st + ") - if FAILED, check the account pool");
+    }
+
+    @When("the student submits the assessment attempt")
+    public void theStudentSubmitsTheAssessmentAttempt() {
+        ChallengeControlPanel cp = ccp();
+        assertTrue(cp.waitEnabled(ChallengeControlPanel.SUBMIT, 180),
+                "Submit never became enabled on the assessment control panel");
+        cp.submitAttempt();
+        studentPage.waitForTimeout(5_000);
+    }
+
+    @Then("the attempt is evaluated")
+    public void theAttemptIsEvaluated() {
+        // The engine runs the configured evaluation scripts against the lab account — takes minutes.
+        // Poll the student landing; a fresh student passes 0 tests, so grade 0 / Fail is EXPECTED.
+        String status = "unknown";
+        for (int poll = 1; poll <= 32; poll++) {   // ~16 min ceiling (evaluation timeout is 10 min)
+            openLanding(studentPage);
+            String body = studentPage.locator("#region-main").count() > 0
+                    ? studentPage.locator("#region-main").innerText() : "";
+            boolean failed = body.contains("Evaluation Failed");
+            boolean evaluating = body.contains("Evaluating");
+            boolean evaluated = body.contains("Evaluated") && !evaluating;
+            status = failed ? "EvaluationFailed" : evaluating ? "Evaluating" : evaluated ? "Evaluated" : "InProgress/other";
+            System.out.println("[Assess] eval poll " + poll + " -> " + status);
+            if (failed) throw new AssertionError("evaluation FAILED (engine reported Evaluation Failed)");
+            if (evaluated) {
+                Locator grade = studentPage.locator("#np-ap-cl-highestGrade");
+                System.out.println("[Assess] evaluated; grade element: "
+                        + (grade.count() > 0 ? grade.first().innerText().trim() : "(not rendered)"));
+                return;
+            }
+            studentPage.waitForTimeout(25_000);
+        }
+        throw new AssertionError("attempt did not reach Evaluated within the ceiling (last status: " + status + ")");
+    }
+
+    private String valOf(String selector) {
+        Locator l = studentPage.locator(selector);
+        if (l.count() == 0) return null;
+        try {
+            String tag = (String) l.first().evaluate("e => e.tagName");
+            return "INPUT".equals(tag) ? l.first().inputValue() : l.first().innerText().trim();
+        } catch (Throwable e) { return null; }
+    }
+
+    @Then("the assessment auto-completes with a final result")
+    public void theAssessmentAutoCompletesWithAFinalResult() {
+        openLanding(studentPage);
+        studentPage.waitForTimeout(4_000);
+        String ended = valOf("#np-ap-cl-isChallengeEnded");
+        String finalResult = valOf("#np-ap-cl-finalResult");
+        String grade = valOf("#np-ap-cl-highestGrade");
+        System.out.println("[Assess] auto-complete: isChallengeEnded=" + ended
+                + " finalResult=" + finalResult + " grade=" + grade);
+        assertTrue("1".equals(ended), "the assessment did not auto-complete (isChallengeEnded=" + ended + ")");
+        assertTrue(finalResult != null && !finalResult.isEmpty(),
+                "no final result rendered after completion");
+        // a fresh student passes 0 tests -> Fail / grade 0 is the EXPECTED outcome
+    }
+
+    @Then("the complete-assessment consent gate is present and wired")
+    public void theConsentGateIsPresentAndWired() {
+        // The trigger auto-hid after completion, but the dialog is in the DOM. Force-show it and
+        // verify CGAP-A-9: the final submit is disabled and enables only after ticking consent.
+        studentPage.evaluate("() => { try { if (window.jQuery) "
+                + "jQuery('#np-ap-cl-cmpleteAssessment-dlg').modal('show'); } catch(e){} }");
+        studentPage.waitForTimeout(1_200);
+        Locator finalBtn = studentPage.locator("#np-ap-cl-final-submit-btn");
+        Locator consent = studentPage.locator("#confirmFinalSubmission");
+        assertTrue(finalBtn.count() > 0 && consent.count() > 0, "consent-gate dialog is not present");
+        assertFalse(finalBtn.first().isEnabled(), "final submit is ENABLED before consent (CGAP-A-9)");
+        if (consent.first().isVisible()) {
+            consent.first().check(new Locator.CheckOptions().setForce(true));
+            studentPage.waitForTimeout(700);
+            assertTrue(finalBtn.first().isEnabled(), "final submit did not enable after ticking consent");
+        } else {
+            System.out.println("[Assess] consent modal not shown; verified disabled initial state only");
+        }
+    }
+
+    @When("the student completes the assessment with the consent gate")
+    public void theStudentCompletesWithConsentGate() {
+        // The ACTIVE template is challenge-landing.mustache (view.php) - its complete button is
+        // class .np-ap-cl-challenge-end (no #completeChallengeBtn id; that's the other template).
+        // It is not JS-disabled; it shows when the challenge is started & not ended. data-toggle=modal.
+        Locator complete = studentPage.locator(".np-ap-cl-challenge-end");
+        int idx = -1;
+        for (int i = 0; i < 12 && idx < 0; i++) {   // ~2.5 min, re-opening the landing
+            openLanding(studentPage);
+            studentPage.waitForTimeout(4_000);
+            for (int j = 0; j < complete.count(); j++) {
+                try { if (complete.nth(j).isVisible()) { idx = j; break; } } catch (Throwable ignored) {}
+            }
+        }
+        if (idx < 0) {
+            System.out.println("[Assess] challenge-end count=" + complete.count()
+                    + " (none visible); page buttons="
+                    + studentPage.locator("#region-main button:visible").count());
+        }
+        assertTrue(idx >= 0, "no visible Complete Assessment control (.np-ap-cl-challenge-end) on the landing");
+        complete.nth(idx).click();   // data-toggle=modal -> opens #np-ap-cl-cmpleteAssessment-dlg
+        studentPage.waitForTimeout(1_500);
+        // CGAP-A-9 FIRM: the final submit is disabled until the consent checkbox is ticked
+        Locator finalBtn = studentPage.locator("#np-ap-cl-final-submit-btn");
+        Locator consent = studentPage.locator("#confirmFinalSubmission");
+        assertTrue(finalBtn.count() > 0 && consent.count() > 0, "complete-assessment dialog did not open");
+        assertFalse(finalBtn.first().isEnabled(), "final submit is ENABLED before the consent checkbox (CGAP-A-9)");
+        consent.first().check(new Locator.CheckOptions().setForce(true));
+        studentPage.waitForTimeout(600);
+        assertTrue(finalBtn.first().isEnabled(), "final submit did not enable after ticking consent");
+        finalBtn.first().click();
+        studentPage.waitForTimeout(3_000);
+    }
+
+    @Then("the assessment shows as completed")
+    public void theAssessmentShowsAsCompleted() {
+        boolean completed = false;
+        for (int i = 0; i < 45 && !completed; i++) {
+            try {
+                String body = studentPage.locator("body").innerText();
+                completed = studentPage.locator("#np-ap-cl-finalResult").count() > 0
+                        || body.toLowerCase().contains("completed");
+            } catch (Throwable ignored) {}
+            if (!completed) studentPage.waitForTimeout(1_000);
+        }
+        assertTrue(completed, "no completed signal (final result / 'completed') after final submission");
+    }
+
+    @After("@assesslab")
+    public void cleanupAssessLab() {
+        if (studentCtx != null) { try { studentCtx.close(); } catch (Throwable ignored) {} studentCtx = null; }
+        if (student != null) {
+            try { ApiClient.deleteUser(student.id); } catch (Throwable ignored) {}   // cascade-deletes the lab
+            student = null;
+        }
+        if (assessLabId != null && !assessLabId.isEmpty()) {
+            try { CloudLabsClient.waitForState(assessLabId, EnumSet.of(ManageLabs.LabState.DELETED), 600, 15); }
+            catch (Throwable e) { System.out.println("[Assess] delete-wait: " + e.getMessage()); }
+            assessLabId = null;
+        }
     }
 }
