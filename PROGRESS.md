@@ -10,27 +10,42 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 ---
 
 ## Coverage at a glance
-"Automated scenarios" = green Cucumber scenarios in the feature files (a Scenario Outline counts its
-data rows). "Doc cases covered" = of the module's documented test cases in the regression doc (the
-`covered / total` denominator is the ORIGINAL manual case count in `MoodleRegression_Testing.xlsx`,
-excluding the `CGAP-*` gap rows we added — those are counted separately). Covered is approximate:
-one scenario can exercise several doc cases and vice-versa. Counts are the automated backbone — many
-uncovered doc cases are combinatorial variations of a mechanic that IS covered, or are deferred below.
+Denominators are the **current master `MoodleRegression_Testing_Kiwi.xlsx`** (36 case-sheets, ~1,976
+original doc cases + our 116 `CGAP-*`/gap rows = 2,092 rows). "Automated scenarios" = green Cucumber
+scenarios (a Scenario Outline counts its data rows). "Doc cases covered" = `covered / sheet total`
+(sheet total excludes our gap rows). Covered is approximate — one scenario can exercise several doc
+cases and vice-versa; many uncovered cases are combinatorial variations of a covered mechanic, or are
+deferred. **Overall automated coverage of the current master is ~9%** — the Kiwi doc is far larger than
+the original and adds many feature areas not yet started (listed below).
 
-| Module | Automated scenarios | Doc cases covered | Derived gaps (CGAP) | Deferred (reason) |
+### Modules with automation
+| Module (Kiwi sheet) | Automated scenarios | Doc cases covered | Derived gaps | Deferred (reason) |
 |---|---|---|---|---|
-| Playground | ~24 green | ~30 / 57 | CGAP-PG in matrix | template variants, config-gated, value-checks |
-| Guided | 13 | ~12 / 29 | CGAP-PGG 1-3,5,8,9,13-17 | Complete btn dormant; overrides/checkpoint; cron |
-| Moodle_users | 25 | ~24 / 30 | CGAP-U 1,2,6,7,8 | report-builder list, bulk import, config/mail cases |
-| Tags | 29 | ~29 / 41 | CGAP-T (partial) | Orgo/report tags, config-gated |
-| Roles | 10 (matrix ≈ 56 cases) | ~56 / 88 | CGAP-R defined | enforcement gaps, broad functional |
-| Groups | 11 | ~10 / 46 | CGAP-GR defined | cohort-sync enrolment, reports, time-based |
-| Assessment | 16 (15 green + 1 defect red) | ~10 / 145 | CGAP-A 1-9 | PS-CRUD (no PS on 781), per-testcase marks, cron, proctoring |
-| **Total** | **~108 green scenarios** | ~172 / 436 doc cases | — | — |
+| Playground (Moodle_Playground_Labs 16 + reorg into Sandbox/Lab_Control_Panel/My_Labs) | ~24 green | ~30 (spans those sheets) | CGAP-PG(37)+PlaygroundGap | template variants, config-gated, value-checks |
+| Guided (Moodle_Guided_Labs 42) | 13 | ~12 / 42 | CGAP-PGG (19) | Complete btn dormant; overrides/checkpoint; cron |
+| Moodle_users (35) | 25 | ~24 / 35 | CGAP-U (12) | report-builder list, bulk import, config/mail cases |
+| Tags (Moodle_Tags 43) | 29 | ~29 / 43 | CGAP-T (11) | Orgo/report tags, config-gated |
+| Roles (Moodle_Roles 90) | 10 (matrix ≈ 56 cases) | ~56 / 90 | CGAP-R (12) | enforcement gaps, broad functional |
+| Groups (Groups_Testcases 48) | 11 | ~10 / 48 | CGAP-GR (11) | cohort-sync enrolment, reports, time-based |
+| Assessment (Moodle_Assessment_Labs 327) | 16 (15 green + 1 defect red) | ~10 / 327 | CGAP-A (11) | PS-CRUD, per-testcase marks, cron, proctoring, hide-grades |
+| **Subtotal (worked sheets)** | **~108 green scenarios** | **~172 / ~601 doc cases** | 113 gap rows | — |
 
-(Assessment's doc grew to 327 cases in the newer `MoodleRegression_Testing_Kiwi.xlsx`; the 145 above is
-the original-doc denominator used for all modules for consistency. Most of the extra Kiwi cases are
-randomization / per-testcase-mark / cron variations — see the Assessment section for the deferred split.)
+### Not started — 0 covered (the rest of the current master, ~1,375 cases across 27 sheets)
+Reports 202 · Practice_Project 141 · NuveBulkMail 110 · All Course Page 106 · Lab_Templates 82 ·
+Moodle settings 79 · Pre_Delivery_Lab_Checklist 72 · Randomization_Activity 68 · Activities 67 ·
+Moodle_Logs 50 · CloudLabs_Lab_Creation_Status 49 · My_Labs 41 · AWS_Marketplace_Integration 36 ·
+Lab_Control_Panel 34 · Course_Sync_Multi_Tenant 33 · User_Sync_Orgo 31 · Raven360_AWS_Content 29 ·
+Content_Integration_Git_URL 24 · Lab_Creation_Region_Based 23 · Moodle_cron 17 ·
+Sequential_Activity_Completion 16 · Difficulty_Level_Configuration 14 · Moodle-Cloudlabs Integration 13 ·
+Sandbox 12 · Course_Category_Lab_Provision 12 · Stop_Lab_Enhancement 7 · LoadBalacer_Moodle 7.
+
+### Grand total (current master)
+**~172 of ~1,976 original doc cases automated (~9%)** · ~108 green scenarios · 116 `CGAP-*`/gap rows we
+authored & merged into the Kiwi doc. The bulk of the gap is the newly-added feature sheets + expanded
+Assessment/Reports/Practice_Project/NuveBulkMail — most are automatable (config/UI/admin surface), some
+are real-lab/cron/proctoring (deferred). Note: some new sheets (Sandbox, Lab_Control_Panel, My_Labs,
+Practice_Project) overlap Playground/Guided mechanics already automated, so effective coverage of NEW
+behavior is a bit higher than the raw 9%.
 
 Findings raised: Roles permissions defect (fixed+verified) · Assessment CGAP-A-8 (`@assessdeviation`,
 open — student can open the problem-statements admin page) · guided cmid 780 env fixes (due date/timelimit).
