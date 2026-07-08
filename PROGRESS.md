@@ -29,13 +29,14 @@ the original and adds many feature areas not yet started (listed below).
 | Groups (Groups_Testcases 48) | 11 | ~10 / 48 | CGAP-GR (11) | cohort-sync enrolment, reports, time-based |
 | Assessment (Moodle_Assessment_Labs 327) | 16 (15 green + 1 defect red) | ~10 / 327 | CGAP-A (11) | PS-CRUD, per-testcase marks, cron, proctoring, hide-grades |
 | Pre-Delivery (Pre_Delivery_Lab_Checklist 72) | 4 green | ~4 / 72 | CGAP-PDL (4) | successful save+audit log, screenshot upload, dashboard filters |
-| NuveBulkMail (local_bulkmail, sheet 110) | 4 green | ~5 / 110 | — | compose/send, templates, reminders, campaign cron (need SMTP capture) |
-| **Subtotal (worked sheets)** | **~116 green scenarios** | **~181 / ~783 doc cases** | 117 gap rows | — |
+| NuveBulkMail (local_bulkmail, sheet 110) | 4 green | ~5 / 110 | CGAP-BM (3) | compose/send, templates, reminders, campaign cron (need SMTP capture) |
+| AWS_Marketplace (local_nuveawsmarketplace, 36) | 4 green + 1 defect red | ~6 / 36 | CGAP-AWS (3) | subscriptions flow, save valid config (mutates), multi-region |
+| **Subtotal (worked sheets)** | **~120 green scenarios** | **~187 / ~819 doc cases** | 123 gap rows | — |
 
 ### Not started — 0 covered (the rest of the current master, ~1,375 cases across 27 sheets)
 Reports 202 · Practice_Project 141 · All Course Page 106 · Lab_Templates 82 ·
 Moodle settings 79 · Randomization_Activity 68 · Activities 67 ·
-Moodle_Logs 50 · CloudLabs_Lab_Creation_Status 49 · My_Labs 41 · AWS_Marketplace_Integration 36 ·
+Moodle_Logs 50 · CloudLabs_Lab_Creation_Status 49 · My_Labs 41 ·
 Lab_Control_Panel 34 · Course_Sync_Multi_Tenant 33 · User_Sync_Orgo 31 · Raven360_AWS_Content 29 ·
 Content_Integration_Git_URL 24 · Lab_Creation_Region_Based 23 · Moodle_cron 17 ·
 Sequential_Activity_Completion 16 · Difficulty_Level_Configuration 14 · Moodle-Cloudlabs Integration 13 ·
@@ -182,6 +183,14 @@ open — student can open the problem-statements admin page) · guided cmid 780 
 - 🔲 Batch 2+: compose flow (compose.php step1/step3), templates CRUD (templates.php/template_form.php),
   reminders (reminders.php), schedule, logs — automatable UI; ⏸️ actual mail send + campaign cron
   (process_campaigns) need SMTP capture.
+
+## AWS Marketplace  — tag `@awsmarket` (plugin `local_nuveawsmarketplace`; Kiwi sheet 36)
+- ✅ **Batch 1 (admin settings)**: `/admin/settings.php?section=local_nuveawsmarketplace_settings` shows
+  region dropdown + access_key + secret_key + support_email; invalid support email rejected (validation,
+  not persisted); student blocked (Moodle "sectionerror"). Green.
+- 🔴 **FINDING (`@awsdeviation`, red by design)**: the **AWS Secret Key is a plain-text input, not masked**
+  (should use admin_setting_configpasswordunmask) — sensitive credential shown in clear.
+- 🔲 Batch 2: subscriptions flow (awsmpsubscriptions.php), multi-region, save-valid-config (mutates → save+restore)
 
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Reports (Kiwi: 203 — cloudlabs report), Activities (68), All Course Page (107)
