@@ -108,8 +108,15 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
   Gotchas: challenge-landing.mustache is the ACTIVE template (not assessment-landing); complete button
   is `.np-ap-cl-challenge-end` (auto-hides once ended); "Start hands-on lab" launch needed; lab id from
   admin Manage Labs. ASSESSMENT_SCRIPT_URL/LAB_TEMPLATE documented in .env.example (plan 777/team 90).
-- 🔲 Batch 3: problem-statements admin CRUD (A249/250/255/257/259), overrides, user-attempts drill-down,
-  retake-after-completion, admin manage-challenge table
+- ✅ **Batch 3 (admin surface, no provisioning)** (`@assessadmin`): manage-challenges table lists
+  enrolled users with grade/result columns (A11/A16); override + report + user-attempt controls present
+  (A45-54/A103 surface); user-attempts drill-down opens userattempts.php (#np-ap-user-attempts-table,
+  via row-radio select + #np-ap-user-attempt); admin CAN open the problem-statements page (A249-admin,
+  counterpart to the @assessdeviation student defect). All green.
+- 🔲 Problem-statements CRUD (A250/255/257/259): 781 has NO problem statements (randomization off) -
+  needs a randomized activity with seeded PS; deferred until such an activity/cmid is available
+- 🔲 Overrides deep flow (add/decrease/unlimited A45-A54), retake-after-completion, manual grade update
+  (A115), console-open (A125) - need attempt data / provisioning
 - ⏸️ Per-testcase marks (A65-96 — needs real lab work), cron clusters (A99/185-188/206-214), proctoring
 - ✅ Matrix: ../Docs/Assessment_Coverage_Matrix.md · CGAP-A-1..12 in the Kiwi sheet (A-10 deduped)
 

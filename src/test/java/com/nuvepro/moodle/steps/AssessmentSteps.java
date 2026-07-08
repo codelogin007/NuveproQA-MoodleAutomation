@@ -312,6 +312,83 @@ public class AssessmentSteps {
         if (student != null) { try { ApiClient.deleteUser(student.id); } catch (Throwable ignored) {} student = null; }
     }
 
+    // ---- @assessadmin: admin management surface (read-only presence, no provisioning) ----
+
+    /** Section id of ASSESSMENT_CMID, read from the admin landing. */
+    private String adminSectionId() {
+        if (sectionId != null && !sectionId.isEmpty()) return sectionId;
+        openLanding(ctx.page);
+        Locator sec = ctx.page.locator(H_SECTION);
+        if (sec.count() > 0) sectionId = sec.first().inputValue();
+        if (sectionId == null || sectionId.isEmpty()) throw new SkipException("could not read the assessment section id");
+        return sectionId;
+    }
+
+    private void adminNavigate(String pagePath) {
+        ctx.page.navigate(Settings.BASE_URL + pagePath,
+                new Page.NavigateOptions().setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
+                        .setTimeout(45_000));
+        ctx.page.waitForTimeout(3_000);
+    }
+
+    @When("admin opens manage challenges")
+    public void adminOpensManageChallenges() {
+        adminNavigate("/mod/cloudlabs/managechallenges.php?sectionid=" + adminSectionId());
+    }
+
+    @Then("the manage challenges table lists users with attempt columns")
+    public void theManageChallengesTableListsUsers() {
+        assertTrue(ctx.page.locator("#np-ap-manage-challenge-table").count() > 0,
+                "manage-challenge table not present");
+        assertTrue(ctx.page.locator("#np-ap-manage-challenge-table tbody tr").count() > 0,
+                "manage-challenge table lists no enrolled users");
+        String headers = ctx.page.locator("#np-ap-manage-challenge-table thead").count() > 0
+                ? ctx.page.locator("#np-ap-manage-challenge-table thead").first().innerText().toLowerCase() : "";
+        assertTrue(headers.contains("grade") && headers.contains("result"),
+                "manage-challenge table missing grade/result columns (headers=" + headers.replace("\n", " ") + ")");
+    }
+
+    @Then("the override report and user-attempt controls are present")
+    public void theOverrideReportUserAttemptControlsArePresent() {
+        assertTrue(ctx.page.locator("#np-ap-cl-assessment-override-actions").count() > 0,
+                "override actions control not present");
+        assertTrue(ctx.page.locator("#np-ap-assessment-report-btn").count() > 0,
+                "assessment report button not present");
+        assertTrue(ctx.page.locator("#np-ap-user-attempt").count() > 0,
+                "user-attempt control not present");
+    }
+
+    @Then("admin can open the user attempts drill-down")
+    public void adminCanOpenTheUserAttemptsDrillDown() {
+        // The user-attempt button is disabled until a user row's radio (name=btSelectItem) is selected;
+        // it then navigates to userattempts.php?userid=..&sectionid=..
+        Locator firstRow = ctx.page.locator("#np-ap-manage-challenge-table tbody tr").first();
+        Locator sel = firstRow.locator("input[type=radio], input[type=checkbox]");
+        try {
+            if (sel.count() > 0) sel.first().check(new Locator.CheckOptions().setForce(true));
+            else firstRow.click();
+        } catch (Throwable ignored) {}
+        ctx.page.waitForTimeout(600);
+        ctx.page.locator("#np-ap-user-attempt").first().click();
+        ctx.page.waitForTimeout(3_000);
+        assertTrue(ctx.page.url().contains("userattempts.php"),
+                "user-attempts drill-down did not navigate to userattempts.php (url=" + ctx.page.url() + ")");
+        assertTrue(ctx.page.locator("#np-ap-user-attempts-table").count() > 0,
+                "user-attempts table (#np-ap-user-attempts-table) not present on the drill-down page");
+    }
+
+    @When("admin opens the assessment problem statements page")
+    public void adminOpensTheProblemStatementsPage() {
+        adminNavigate("/mod/cloudlabs/assessment-problemstatements.php?sectionid=" + adminSectionId());
+    }
+
+    @Then("the problem statements admin page renders for admin")
+    public void theProblemStatementsPageRendersForAdmin() {
+        // Admin CAN access this page (the student-blocked counterpart is the @assessdeviation defect).
+        assertTrue(ctx.page.locator("#np-ap-ps-problemstatement").count() > 0,
+                "problem-statements admin table did not render for admin");
+    }
+
     // ---- @assesslab: provisioned lifecycle with REAL evaluation ----
 
     private String assessLabId;
