@@ -34,10 +34,11 @@ the original and adds many feature areas not yet started (listed below).
 | Content_Integration_Git_URL (24) | 1 green | ~3 / 24 | CGAP-CIG (2) | git-fetch valid/invalid, all-three-lab-types matrix |
 | Difficulty_Level_Configuration (14) | 2 green | ~3 / 14 | CGAP-DLC (3) | empty-save handling, config→activity flow |
 | Randomization_Activity (mod_randomactivity, 68) | 4 green | ~5 / 68 | CGAP-RAND (3) | dynamic-display/completion behavior, grades, view/index |
-| **Subtotal (worked sheets)** | **~127 green scenarios** | **~198 / ~925 doc cases** | 131 gap rows | — |
+| Lab_Templates (cloudlabs labtemplates.php, 82) | 3 green | ~4 / 82 | CGAP-LT (4) | create/edit/delete template (mutates core config), catalog-driven fields |
+| **Subtotal (worked sheets)** | **~130 green scenarios** | **~202 / ~1007 doc cases** | 135 gap rows | — |
 
-### Not started — 0 covered (the rest of the current master, ~1,375 cases across 27 sheets)
-Reports 202 · Practice_Project 141 · All Course Page 106 · Lab_Templates 82 ·
+### Not started — 0 covered (the rest of the current master, ~1,290 cases across 26 sheets)
+Reports 202 · Practice_Project 141 · All Course Page 106 ·
 Moodle settings 79 · Activities 67 ·
 Moodle_Logs 50 · CloudLabs_Lab_Creation_Status 49 · My_Labs 41 ·
 Lab_Control_Panel 34 · Course_Sync_Multi_Tenant 33 · User_Sync_Orgo 31 · Raven360_AWS_Content 29 ·
@@ -210,6 +211,14 @@ open — student can open the problem-statements admin page) · guided cmid 780 
   course → deleted via UI in `@After` (WS token lacks core_course_delete_modules). All green.
 - 🔲 Batch 2: dynamic-display behavior, completion tracking, grades (grade.php/gradeslist.php),
   view/index rendering, activity randomization logic
+
+## Lab Templates  — tag `@labtemplates` (cloudlabs labtemplates.php; Kiwi sheet Moodle_Lab_Templates 82)
+- ✅ **Batch 1 (no persistence)**: list page `#np-ap-lt-labtable` (Name/Description/Plan ID/Team ID/
+  Updated On/Status); add form (addlabtemplate.php) config fields (resource_type + interval/duration +
+  save); site-admin-only gate (require_login + is_siteadmin → bare `die` = blank page for non-admins). Green.
+- 🔲 Batch 2: create/edit/delete a template (mutates core config — needs careful create+delete),
+  catalog-driven plan/team auto-fill, status activate/deactivate, template used-by-activity linkage
+- ⚠️ Nit (CGAP-LT-3): non-site-admin gets a BLANK page (bare `die`), not a proper Moodle access-denied
 
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Reports (Kiwi: 203 — cloudlabs report), Activities (68), All Course Page (107)
