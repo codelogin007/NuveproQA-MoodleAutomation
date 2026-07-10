@@ -5,3 +5,8 @@ test-output/
 *.iml
 .idea/
 reports/
+
+# QA doc backups and Excel lock files (keep only the current master)
+docs/*.backup*.xlsx
+docs/~$*
+~$*.xlsx
