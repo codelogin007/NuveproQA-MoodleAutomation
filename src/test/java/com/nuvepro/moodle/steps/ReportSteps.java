@@ -99,8 +99,54 @@ public class ReportSteps {
                 "clicking a course did not open its participant report");
     }
 
-    @Then("a student cannot open the cloudlabs course report")
-    public void aStudentCannotOpenTheReport() {
+    private static final String PARTICIPANTS = "#np-rp-course-participants";
+
+    @When("admin opens the course participant report")
+    public void adminOpensTheCourseParticipantReport() {
+        if (Settings.COURSE_ID.isEmpty()) throw new SkipException("COURSE_ID not set");
+        open(ctx.page, "/report/cloudlabsreport/courseparticipants.php?id=" + Settings.COURSE_ID);
+        for (int i = 0; i < 20 && ctx.page.locator(PARTICIPANTS + " tbody tr").count() == 0; i++)
+            ctx.page.waitForTimeout(1_000);
+    }
+
+    @Then("the participant report lists participants with name email and result columns")
+    public void theParticipantReportListsParticipants() {
+        assertTrue(ctx.page.locator(PARTICIPANTS).count() > 0, "participant report table not present");
+        assertTrue(ctx.page.locator(PARTICIPANTS + " tbody tr").count() > 0, "no participants listed");
+        String headers = ctx.page.locator(PARTICIPANTS).first().innerText().toLowerCase();
+        assertTrue(headers.contains("name") && headers.contains("email") && headers.contains("result"),
+                "participant report missing Name/Email/Result columns");
+    }
+
+    @Then("drilling a participant opens their challenge report")
+    public void drillingAParticipantOpensTheirChallengeReport() {
+        Locator link = ctx.page.locator(PARTICIPANTS + " tbody tr a[href*='userchallenges.php'], "
+                + PARTICIPANTS + " tbody tr a[href*='userattempts.php']");
+        if (link.count() == 0) link = ctx.page.locator(PARTICIPANTS + " tbody tr a");
+        assertTrue(link.count() > 0, "no participant drill-down link");
+        link.first().click();
+        ctx.page.waitForTimeout(3_000);
+        assertTrue(ctx.page.url().contains("userchallenges.php") || ctx.page.url().contains("userattempts.php")
+                        || ctx.page.locator("table").count() > 0,
+                "drilling a participant did not open their challenge/attempt report");
+    }
+
+    @Then("a student cannot open the report participant and attempt sub-pages")
+    public void aStudentCannotOpenTheSubPages() {
+        Page sp = seedStudentPage();
+        String c = Settings.COURSE_ID;
+        // DEVIATION: all sub-pages leak - a student sees other users' data
+        for (String path : new String[]{
+                "/report/cloudlabsreport/courseparticipants.php?id=" + c,
+                "/report/cloudlabsreport/userchallenges.php?id=2&course=" + c,
+                "/report/cloudlabsreport/userattempts.php?id=2&course=" + c}) {
+            open(sp, path);
+            assertTrue(sp.locator("table tbody tr").count() == 0,
+                    "DEFECT: a student can open a report sub-page and see other users' data via " + path);
+        }
+    }
+
+    private Page seedStudentPage() {
         if (Settings.WS_TOKEN.isEmpty()) throw new SkipException("MOODLE_WS_TOKEN not set");
         student = ApiClient.createUser(System.currentTimeMillis());
         if (!Settings.COURSE_ID.isEmpty())
@@ -110,6 +156,12 @@ public class ReportSteps {
         Page sp = studentCtx.newPage();
         sp.setDefaultTimeout(Settings.DEFAULT_TIMEOUT_MS);
         Auth.uiLogin(sp, student.username, student.password);
+        return sp;
+    }
+
+    @Then("a student cannot open the cloudlabs course report")
+    public void aStudentCannotOpenTheReport() {
+        Page sp = seedStudentPage();
         open(sp, COURSES);
         // DEVIATION: courses.php only require_login -> a student can see the course report table.
         assertTrue(sp.locator(TABLE).count() == 0,

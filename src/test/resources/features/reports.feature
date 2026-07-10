@@ -22,9 +22,25 @@ Feature: CloudLabs course reports
     When admin opens the cloudlabs course report
     Then clicking a course opens its participant report
 
+  @RPT-participants @reports
+  Scenario: The participant report lists participants with result columns
+    When admin opens the course participant report
+    Then the participant report lists participants with name email and result columns
+
+  @RPT-userdrill @reports
+  Scenario: Drilling a participant opens their challenge report
+    When admin opens the course participant report
+    Then drilling a participant opens their challenge report
+
   # DEVIATION (fails by design until fixed): courses.php has only require_login (no capability /
   # context check), so a logged-in student can open the course report and see all courses' data.
   @RPT-role @rptdeviation @reports
   Scenario: DEVIATION - the course report should be blocked for students
     When admin opens the cloudlabs course report
     Then a student cannot open the cloudlabs course report
+
+  # DEVIATION (fails by design): the whole report chain leaks - a student can open the participant
+  # report AND individual users' challenge/attempt sub-pages (other users' name/email/results).
+  @RPT-subpage @rptdeviation @reports
+  Scenario: DEVIATION - report participant and attempt sub-pages must be blocked for students
+    Then a student cannot open the report participant and attempt sub-pages

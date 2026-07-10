@@ -35,8 +35,8 @@ the original and adds many feature areas not yet started (listed below).
 | Difficulty_Level_Configuration (14) | 2 green | ~3 / 14 | CGAP-DLC (3) | empty-save handling, config→activity flow |
 | Randomization_Activity (mod_randomactivity, 68) | 4 green | ~5 / 68 | CGAP-RAND (3) | dynamic-display/completion behavior, grades, view/index |
 | Lab_Templates (cloudlabs labtemplates.php, 82) | 3 green | ~4 / 82 | CGAP-LT (4) | create/edit/delete template (mutates core config), catalog-driven fields |
-| Reports (report_cloudlabsreport, 202) | 3 green + 1 defect red | ~6 / 202 | CGAP-RPT (3) | data-verification (counts/grades/dates - need fixtures), per-report-type (imocha/Capgemini) |
-| **Subtotal (worked sheets)** | **~133 green scenarios** | **~208 / ~1209 doc cases** | 138 gap rows | — |
+| Reports (report_cloudlabsreport, 202) | 5 green + 2 defect red | ~9 / 202 | CGAP-RPT (3) | data-verification (counts/grades/dates - need fixtures), per-report-type (imocha/Capgemini) |
+| **Subtotal (worked sheets)** | **~135 green scenarios** | **~211 / ~1209 doc cases** | 138 gap rows | — |
 
 ### Not started — 0 covered (the rest of the current master, ~1,088 cases across 25 sheets)
 Practice_Project 141 · All Course Page 106 ·
@@ -225,11 +225,15 @@ open — student can open the problem-statements admin page) · guided cmid 780 
 - ✅ **Batch 1 (course report landing)**: `courses.php` lists courses (`#np-rp-courses-npcourses`:
   Course Name/Total Assessments/Participants/Start/End Date); search filters + clears (placeholder
   "Search by name"); course drills into `courseparticipants.php`. Rows load via AJAX (wait for them). Green.
-- 🔴 **FINDING (`@rptdeviation`, red by design)**: `courses.php` has ONLY `require_login()` (no capability
-  /context check) — a STUDENT can open the CloudLabs course report and see ALL courses' assessment/
-  participant data. Data-exposure. (CGAP-RPT-1/2)
-- 🔲 Batch 2+: per-report-type (imocha 52, Highest-duration 33, Capgemini 47, assessment-attempts 24),
-  participant/attempt drill-down data, export. ⏸️ data-verification (counts/grades/dates = need fixtures)
+- ✅ **Batch 2 (participant drill-down)**: `courseparticipants.php` lists participants (Name/Email/
+  Result/Group); drilling a participant opens `userchallenges.php`. Green.
+- 🔴 **FINDING (`@rptdeviation`, red by design) — WHOLE CHAIN LEAKS**: every `report_cloudlabsreport`
+  page has ONLY `require_login()` (no capability/context). A STUDENT can open `courses.php`,
+  `courseparticipants.php` (**other users' Name/Email/Result**), and `userchallenges.php`/
+  `userattempts.php` (**another user's challenge/attempt data**). Cross-user PII + result exposure —
+  ESCALATE. (CGAP-RPT-1/2)
+- 🔲 Batch 3+: per-report-type (imocha 52, Highest-duration 33, Capgemini 47, assessment-attempts 24),
+  export. ⏸️ data-verification (counts/grades/dates = need fixtures)
 
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Reports (Kiwi: 203 — cloudlabs report), Activities (68), All Course Page (107)
