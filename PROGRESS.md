@@ -36,12 +36,13 @@ the original and adds many feature areas not yet started (listed below).
 | Randomization_Activity (mod_randomactivity, 68) | 4 green | ~5 / 68 | CGAP-RAND (3) | dynamic-display/completion behavior, grades, view/index |
 | Lab_Templates (cloudlabs labtemplates.php, 82) | 3 green | ~4 / 82 | CGAP-LT (4) | create/edit/delete template (mutates core config), catalog-driven fields |
 | Reports (report_cloudlabsreport, 202) | 5 green + 2 defect red | ~9 / 202 | CGAP-RPT (3) | data-verification (counts/grades/dates - need fixtures), per-report-type (imocha/Capgemini) |
-| **Subtotal (worked sheets)** | **~135 green scenarios** | **~211 / ~1209 doc cases** | 138 gap rows | — |
+| My_Labs (theme_nuvetheme mylabs.php, 41) | 3 green | ~4 / 41 | CGAP-ML (3) | launch/stop/expired/empty-state (need real labs), responsive, settings toggles |
+| **Subtotal (worked sheets)** | **~138 green scenarios** | **~215 / ~1250 doc cases** | 141 gap rows | — |
 
 ### Not started — 0 covered (the rest of the current master, ~1,088 cases across 25 sheets)
 Practice_Project 141 · All Course Page 106 ·
 Moodle settings 79 · Activities 67 ·
-Moodle_Logs 50 · CloudLabs_Lab_Creation_Status 49 · My_Labs 41 ·
+Moodle_Logs 50 · CloudLabs_Lab_Creation_Status 49 ·
 Lab_Control_Panel 34 · Course_Sync_Multi_Tenant 33 · User_Sync_Orgo 31 · Raven360_AWS_Content 29 ·
 Lab_Creation_Region_Based 23 · Moodle_cron 17 ·
 Sequential_Activity_Completion 16 · Moodle-Cloudlabs Integration 13 ·
@@ -234,6 +235,13 @@ open — student can open the problem-statements admin page) · guided cmid 780 
   ESCALATE. (CGAP-RPT-1/2)
 - 🔲 Batch 3+: per-report-type (imocha 52, Highest-duration 33, Capgemini 47, assessment-attempts 24),
   export. ⏸️ data-verification (counts/grades/dates = need fixtures)
+
+## My Labs  — tag `@mylabs` (theme_nuvetheme `/theme/nuvetheme/mylabs.php`; Kiwi sheet My_Labs 41)
+- ✅ **Batch 1 (no provisioning)**: page renders lab cards (`.course-card`) + search; unauthenticated →
+  login redirect; search sanitizes a `<script>` payload (no execution). Green. Page is require_login +
+  user-scoped (no cross-user leak — unlike the Reports plugin).
+- 🔲 Batch 2: launch/stop a lab from a card, expired-lab display, empty state, responsive, user
+  isolation with real labs, "Show My Labs"/"Activity Type"/"Status Text" theme settings
 
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Reports (Kiwi: 203 — cloudlabs report), Activities (68), All Course Page (107)
