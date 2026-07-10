@@ -10,13 +10,12 @@ Run a module: `mvnw test "-Dcucumber.tags=@<tag>"`.
 ---
 
 ## Coverage at a glance
-Denominators are the **current master `MoodleRegression_Testing_Kiwi.xlsx`** (36 case-sheets, ~1,976
-original doc cases + our 116 `CGAP-*`/gap rows = 2,092 rows). "Automated scenarios" = green Cucumber
-scenarios (a Scenario Outline counts its data rows). "Doc cases covered" = `covered / sheet total`
-(sheet total excludes our gap rows). Covered is approximate — one scenario can exercise several doc
-cases and vice-versa; many uncovered cases are combinatorial variations of a covered mechanic, or are
-deferred. **Overall automated coverage of the current master is ~9%** — the Kiwi doc is far larger than
-the original and adds many feature areas not yet started (listed below).
+**Authoritative per-case status is the `Automation_Coverage` dashboard sheet in
+`docs/MoodleRegression_Testing_Kiwi.xlsx`** (each case has an `Automated` + `Automation_Ref` column).
+Audited per-case totals across the 16 worked sheets: **246 Yes · 1 Partial · 6 Deviation (findings) ·
+76 Deferred (gap rows) · 1,065 No = 1,394** → **~18% of worked-sheet cases**, or **~12% of the full
+master (~1,976 original cases across 36 sheets)**. The 20 untouched sheets are 0%.
+The table below is the module-level narrative; the dashboard is the source of truth per case.
 
 ### Modules with automation
 | Module (Kiwi sheet) | Automated scenarios | Doc cases covered | Derived gaps | Deferred (reason) |

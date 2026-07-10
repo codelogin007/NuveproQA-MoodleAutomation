@@ -200,3 +200,17 @@ residual UI read must wait for a real row (`open()` already does).
   `@provisioning` + shared lab for real-lab flows, config-gated skips for special preconditions.
 - Selectors: guided-landing.mustache / assessment-landing.mustache (already inventoried in the Python
   Page Objects `../automation/pages/*`). Reuse those.
+
+## Coverage tracking — PER CASE, not per sheet (IMPORTANT)
+- Status lives in **`docs/MoodleRegression_Testing_Kiwi.xlsx`** (the master), per-case columns
+  `Automated` + `Automation_Ref`, summarised on the **`Automation_Coverage`** dashboard sheet. NOT in
+  CLAUDE.md (this file is method/instructions), and never claim a whole "sheet automated".
+- Vocabulary: **`Yes`** = a green test verifies THAT case (put the `feature @tag` in `Automation_Ref`);
+  **`Partial`** = partly covered (say what's missing in the ref); **`Deviation`** = a fail-by-design
+  test flagging a real defect; **`Deferred`** = derived `CGAP-*` gap not yet automated; **`No`** = not
+  automated (put the reason in the ref).
+- **Mark `Yes` ONLY where the test verifies that exact case — presence != behaviour.** Do not keyword-
+  guess: it over-claims broad words ("add"/"assign"/"start") and under-claims when the case wording
+  differs from the scenario. When you automate a new case, set its `Automated` row in the same change.
+- `PROGRESS.md` holds the living per-module narrative; the xlsx dashboard is the authoritative per-case
+  source. Keep both in sync.
