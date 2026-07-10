@@ -212,5 +212,10 @@ residual UI read must wait for a real row (`open()` already does).
 - **Mark `Yes` ONLY where the test verifies that exact case — presence != behaviour.** Do not keyword-
   guess: it over-claims broad words ("add"/"assign"/"start") and under-claims when the case wording
   differs from the scenario. When you automate a new case, set its `Automated` row in the same change.
+- **The `Steps` column is UNRELIABLE — do not depend on it.** It has copy-paste/templating errors (e.g.
+  an Assessment "create activity for all platforms" case whose Steps describe creating a *playground*
+  lab). Always derive the real steps from the **Summary + Title** + the actual plugin behaviour
+  (mustache templates / mod_form / services / live selectors). Treat `Steps` as a weak hint at most; if
+  it contradicts the Summary, trust the Summary and the system.
 - `PROGRESS.md` holds the living per-module narrative; the xlsx dashboard is the authoritative per-case
   source. Keep both in sync.
