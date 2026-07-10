@@ -37,7 +37,8 @@ the original and adds many feature areas not yet started (listed below).
 | Lab_Templates (cloudlabs labtemplates.php, 82) | 3 green | ~4 / 82 | CGAP-LT (4) | create/edit/delete template (mutates core config), catalog-driven fields |
 | Reports (report_cloudlabsreport, 202) | 5 green + 2 defect red | ~9 / 202 | CGAP-RPT (3) | data-verification (counts/grades/dates - need fixtures), per-report-type (imocha/Capgemini) |
 | My_Labs (theme_nuvetheme mylabs.php, 41) | 3 green | ~4 / 41 | CGAP-ML (3) | launch/stop/expired/empty-state (need real labs), responsive, settings toggles |
-| **Subtotal (worked sheets)** | **~138 green scenarios** | **~215 / ~1250 doc cases** | 141 gap rows | — |
+| Sandbox (cloudlabs landing, 12) | 3 green | ~6 / 12 | CGAP-SB (2) | Read More modal content, no-lab state (need data/provisioning) |
+| **Subtotal (worked sheets)** | **~141 green scenarios** | **~221 / ~1262 doc cases** | 143 gap rows | — |
 
 ### Not started — 0 covered (the rest of the current master, ~1,088 cases across 25 sheets)
 Practice_Project 141 · All Course Page 106 ·
@@ -46,7 +47,8 @@ Moodle_Logs 50 · CloudLabs_Lab_Creation_Status 49 ·
 Lab_Control_Panel 34 · Course_Sync_Multi_Tenant 33 · User_Sync_Orgo 31 · Raven360_AWS_Content 29 ·
 Lab_Creation_Region_Based 23 · Moodle_cron 17 ·
 Sequential_Activity_Completion 16 · Moodle-Cloudlabs Integration 13 ·
-Sandbox 12 · Course_Category_Lab_Provision 12 · Stop_Lab_Enhancement 7 · LoadBalacer_Moodle 7.
+Course_Category_Lab_Provision 12 · Stop_Lab_Enhancement 7 · LoadBalacer_Moodle 7.
+(Moodle settings 79 - being done by a second automator, out of this repo's scope here.)
 
 ### Grand total (current master)
 **~172 of ~1,976 original doc cases automated (~9%)** · ~108 green scenarios · 116 `CGAP-*`/gap rows we
@@ -242,6 +244,12 @@ open — student can open the problem-statements admin page) · guided cmid 780 
   user-scoped (no cross-user leak — unlike the Reports plugin).
 - 🔲 Batch 2: launch/stop a lab from a card, expired-lab display, empty state, responsive, user
   isolation with real labs, "Show My Labs"/"Activity Type"/"Status Text" theme settings
+
+## Sandbox  — tag `@sandbox` (cloudlabs sandbox/playground landing; Kiwi sheet Sandbox 12)
+- ✅ **Batch 1 (no provisioning)**: sandbox landing (view.php?id=PLAYGROUND_CMID) shows Lab Details
+  (Lab Type=Sandbox / Lab Status / Lab Created date / Sandbox ID), Duration (Alloted/Consumed/
+  Remaining), and Description + Read More. Green.
+- 🔲 Batch 2: Read More modal content (large text/image), no-lab/not-created state (need data)
 
 ## Not started (next sheets — apply the CLAUDE.md coverage-matrix + gap-rows gate first)
 - 🔲 Reports (Kiwi: 203 — cloudlabs report), Activities (68), All Course Page (107)
